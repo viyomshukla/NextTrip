@@ -17,7 +17,7 @@ app.use(express.json());
 
 // Test route
 app.get('/', (req, res) => {
-  res.send('TourCraft Backend API');
+  res.send('NextTrip Backend API');
 });
 
 mongoose.connect(process.env.MONGO_URI)

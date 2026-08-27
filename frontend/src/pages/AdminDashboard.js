@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import API_BASE from '../config';
 
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -38,13 +39,13 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       const [usersRes, toursRes, bookingsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/users', {
+        fetch(`${API_BASE}/api/users`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:5000/api/tours', {
+        fetch(`${API_BASE}/api/tours`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:5000/api/bookings/all', {
+        fetch(`${API_BASE}/api/bookings/all`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
       ]);
@@ -73,7 +74,7 @@ const AdminDashboard = () => {
   const handleCreateTour = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/tours', {
+      const response = await fetch(`${API_BASE}/api/tours`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +102,7 @@ const AdminDashboard = () => {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/users/create-user', {
+      const response = await fetch(`${API_BASE}/api/users/create-user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +114,7 @@ const AdminDashboard = () => {
       const data = await response.json();
       if (response.ok) {
         // Refresh users list
-        const usersRes = await fetch('http://localhost:5000/api/users', {
+        const usersRes = await fetch(`${API_BASE}/api/users`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         if (usersRes.ok) {
@@ -137,7 +138,7 @@ const AdminDashboard = () => {
     if (!window.confirm('Are you sure you want to delete this tour?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/tours/${tourId}`, {
+      const response = await fetch(`${API_BASE}/api/tours/${tourId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
@@ -161,7 +162,7 @@ const AdminDashboard = () => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+      const response = await fetch(`${API_BASE}/api/users/${userId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
@@ -185,7 +186,7 @@ const AdminDashboard = () => {
     const newStatus = currentStatus === 'upcoming' ? 'ongoing' : 'upcoming';
     
     try {
-      const response = await fetch(`http://localhost:5000/api/tours/${tourId}`, {
+      const response = await fetch(`${API_BASE}/api/tours/${tourId}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -215,7 +216,7 @@ const AdminDashboard = () => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/bookings/${bookingId}`, {
+      const response = await fetch(`${API_BASE}/api/bookings/${bookingId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
@@ -262,7 +263,7 @@ const AdminDashboard = () => {
           <button 
             onClick={async () => {
               try {
-                const response = await fetch('http://localhost:5000/api/users/first-admin', {
+                const response = await fetch(`${API_BASE}/api/users/first-admin`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import API_BASE from '../config';
 
 export const AuthContext = createContext();
 
@@ -19,7 +20,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/profile', {
+      const response = await fetch(`${API_BASE}/api/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
@@ -38,7 +39,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -49,7 +50,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', data.token);
         setToken(data.token);
         // Fetch complete user profile after login
-        const profileResponse = await fetch('http://localhost:5000/api/profile', {
+        const profileResponse = await fetch(`${API_BASE}/api/profile`, {
           headers: { Authorization: `Bearer ${data.token}` },
         });
         if (profileResponse.ok) {
@@ -74,7 +75,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password })
@@ -98,7 +99,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
-      const response = await fetch('http://localhost:5000/api/profile', {
+      const response = await fetch(`${API_BASE}/api/profile`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

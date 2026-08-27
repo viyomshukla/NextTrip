@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import Footer from '../components/Footer';
+import API_BASE from '../config';
 
 const Home = () => {
   const { user, logout } = useContext(AuthContext);
@@ -19,7 +20,7 @@ const Home = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('http://localhost:5000/api/tours', {
+        const response = await fetch(`${API_BASE}/api/tours`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         if (response.ok) {
@@ -39,7 +40,7 @@ const Home = () => {
 
   const handleDeleteTour = async (tourId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/tours/${tourId}`, {
+      const response = await fetch(`${API_BASE}/api/tours/${tourId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
@@ -55,7 +56,7 @@ const Home = () => {
     e.preventDefault();
     setCreateMsg('');
     try {
-      const response = await fetch('http://localhost:5000/api/tours', {
+      const response = await fetch(`${API_BASE}/api/tours`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

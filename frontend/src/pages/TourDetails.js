@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import API_BASE from '../config';
 
 const TourDetails = () => {
   const { id } = useParams();
@@ -22,10 +23,10 @@ const TourDetails = () => {
         setLoading(true);
         setError(null);
         const [tourRes, reviewsRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/tours/${id}`, { 
+          fetch(`${API_BASE}/api/tours/${id}`, { 
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } 
           }),
-          fetch(`http://localhost:5000/api/reviews/tour/${id}`)
+          fetch(`${API_BASE}/api/reviews/tour/${id}`)
         ]);
         const tourData = await tourRes.json();
         const reviewsData = await reviewsRes.json();
@@ -54,7 +55,7 @@ const TourDetails = () => {
       return;
     }
     try {
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      const response = await fetch(`${API_BASE}/api/bookings`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -82,7 +83,7 @@ const TourDetails = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/reviews/tour/${id}`, {
+      const response = await fetch(`${API_BASE}/api/reviews/tour/${id}`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -93,7 +94,7 @@ const TourDetails = () => {
       if (response.ok) {
         setNewReview({ rating: 5, comment: '' });
         // Refresh reviews
-        const reviewsRes = await fetch(`http://localhost:5000/api/reviews/tour/${id}`);
+        const reviewsRes = await fetch(`${API_BASE}/api/reviews/tour/${id}`);
         const reviewsData = await reviewsRes.json();
         setReviews(reviewsData);
         alert('Review submitted successfully!');
@@ -107,7 +108,7 @@ const TourDetails = () => {
 
   const handleDeleteReview = async (reviewId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/reviews/${reviewId}`, {
+      const response = await fetch(`${API_BASE}/api/reviews/${reviewId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });

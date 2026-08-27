@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
+import API_BASE from '../config';
 
 const Bookings = () => {
   const { user } = useContext(AuthContext);
@@ -15,7 +16,7 @@ const Bookings = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('http://localhost:5000/api/bookings', {
+        const response = await fetch(`${API_BASE}/api/bookings`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         if (response.ok) {
@@ -39,7 +40,7 @@ const Bookings = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/bookings/${bookingId}`, {
+      const response = await fetch(`${API_BASE}/api/bookings/${bookingId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });

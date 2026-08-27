@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import Footer from '../components/Footer';
+import API_BASE from '../config';
 
 const BookTour = () => {
   const { tourId } = useParams();
@@ -39,7 +40,7 @@ const BookTour = () => {
 
   const fetchTourDetails = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/tours/${tourId}`, {
+      const response = await fetch(`${API_BASE}/api/tours/${tourId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       const data = await response.json();
@@ -162,7 +163,7 @@ const BookTour = () => {
         people: peopleWithImages
       };
 
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      const response = await fetch(`${API_BASE}/api/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

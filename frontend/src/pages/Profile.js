@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import Footer from '../components/Footer';
+import API_BASE from '../config';
 
 const Profile = () => {
   const { user, updateProfile } = useContext(AuthContext);
@@ -44,7 +45,7 @@ const Profile = () => {
 
     setIsChangingPassword(true);
     try {
-      const response = await fetch('http://localhost:5000/api/users/change-password', {
+      const response = await fetch(`${API_BASE}/api/users/change-password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
