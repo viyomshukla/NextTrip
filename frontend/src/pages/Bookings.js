@@ -118,7 +118,6 @@ const Bookings = () => {
           <p style={{
             fontSize: '1.3rem',
             opacity: 0.8,
-            margin: '0',
             maxWidth: '600px',
             margin: '0 auto',
             color: '#4a5568'

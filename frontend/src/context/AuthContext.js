@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import API_BASE from '../config';
 
 export const AuthContext = createContext();
@@ -9,16 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (token) {
-      // Fetch complete user profile including role
-      fetchUserProfile();
-    } else {
-      setUser(null);
-    }
-  }, [token]);
-
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/profile`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -33,7 +24,16 @@ export const AuthProvider = ({ children }) => {
       console.error('Failed to fetch user profile:', err);
       setUser(null);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      // Fetch complete user profile including role
+      fetchUserProfile();
+    } else {
+      setUser(null);
+    }
+  }, [token, fetchUserProfile]);
 
   const login = async (email, password) => {
     setLoading(true);

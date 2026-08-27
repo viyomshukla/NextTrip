@@ -5,13 +5,10 @@ import Footer from '../components/Footer';
 import API_BASE from '../config';
 
 const Home = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newTour, setNewTour] = useState({ title: '', description: '', price: '', category: '', image: '' });
-  const [createMsg, setCreateMsg] = useState('');
   const [showUpcomingDialog, setShowUpcomingDialog] = useState(false);
   const navigate = useNavigate();
 
@@ -37,46 +34,6 @@ const Home = () => {
     };
     if (user) fetchTours();
   }, [user]);
-
-  const handleDeleteTour = async (tourId) => {
-    try {
-      const response = await fetch(`${API_BASE}/api/tours/${tourId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (response.ok) {
-        setTours(tours.filter(t => t._id !== tourId));
-      }
-    } catch (err) {
-      console.error('Failed to delete tour:', err);
-    }
-  };
-
-  const handleCreateTour = async (e) => {
-    e.preventDefault();
-    setCreateMsg('');
-    try {
-      const response = await fetch(`${API_BASE}/api/tours`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}` 
-        },
-        body: JSON.stringify(newTour)
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setTours([...tours, data]);
-        setNewTour({ title: '', description: '', price: '', category: '', image: '' });
-        setShowCreateForm(false);
-        setCreateMsg('Tour created successfully!');
-      } else {
-        setCreateMsg(data.error || 'Failed to create tour');
-      }
-    } catch (err) {
-      setCreateMsg('Failed to create tour');
-    }
-  };
 
   if (loading) return (
     <div style={{
@@ -267,7 +224,6 @@ const Home = () => {
           <p style={{
             fontSize: '1.3rem',
             opacity: 0.8,
-            margin: '0',
             maxWidth: '600px',
             margin: '0 auto',
             color: '#4a5568'

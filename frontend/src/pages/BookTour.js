@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
 import Footer from '../components/Footer';
 import API_BASE from '../config';
 
 const BookTour = () => {
   const { tourId } = useParams();
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
   const [tour, setTour] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,17 +26,7 @@ const BookTour = () => {
   // Get today's date in YYYY-MM-DD format for minimum date
   const today = new Date().toISOString().split('T')[0];
 
-  useEffect(() => {
-    fetchTourDetails();
-  }, [tourId]);
-
-  useEffect(() => {
-    if (tour) {
-      setTotalPrice(tour.price * numberOfPeople);
-    }
-  }, [numberOfPeople, tour]);
-
-  const fetchTourDetails = async () => {
+  const fetchTourDetails = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/tours/${tourId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -55,7 +43,17 @@ const BookTour = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tourId]);
+
+  useEffect(() => {
+    fetchTourDetails();
+  }, [fetchTourDetails]);
+
+  useEffect(() => {
+    if (tour) {
+      setTotalPrice(tour.price * numberOfPeople);
+    }
+  }, [numberOfPeople, tour]);
 
   const handleNumberOfPeopleChange = (count) => {
     setNumberOfPeople(count);

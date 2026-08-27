@@ -41,8 +41,6 @@ const TourDetails = () => {
     if (id) fetchTourAndReviews();
   }, [id]);
 
-  const hasReviewed = reviews.some(r => r.user._id === user?.id);
-
   const handleBook = async (e) => {
     e.preventDefault();
     setBookingMsg('');
