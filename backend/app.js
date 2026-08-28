@@ -13,7 +13,9 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+// Bookings embed base64 traveller photos, so the default 100kb body limit is
+// far too small. Images are compressed client-side before upload.
+app.use(express.json({ limit: '10mb' }));
 
 // Test route
 app.get('/', (req, res) => {

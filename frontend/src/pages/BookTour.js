@@ -3,6 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import API_BASE from '../config';
 
+// Traveller photos are embedded in the booking JSON as base64, so they must stay
+// small enough for the API body limit and a single Mongo document.
+const MAX_IMAGE_DIMENSION = 800;
+const IMAGE_QUALITY = 0.7;
+
 const BookTour = () => {
   const { tourId } = useParams();
   const navigate = useNavigate();
@@ -170,12 +175,23 @@ const BookTour = () => {
         body: JSON.stringify(bookingData)
       });
 
-      const data = await response.json();
+      // A failure can happen before the request reaches the JSON API (a 413 from
+      // the body parser returns HTML), so don't assume the body parses.
+      const raw = await response.text();
+      let data = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch (parseErr) {
+        // Non-JSON error page; fall through to the status-based message below.
+      }
+
       if (response.ok) {
         alert('Tour booked successfully!');
         navigate('/bookings');
+      } else if (response.status === 413) {
+        alert('Those photos are too large to upload. Please choose smaller images.');
       } else {
-        alert(data.error || 'Failed to book tour');
+        alert(data.error || `Failed to book tour (server returned ${response.status})`);
       }
     } catch (err) {
       alert('Failed to book tour');
@@ -187,7 +203,19 @@ const BookTour = () => {
   const convertImageToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', IMAGE_QUALITY));
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
