@@ -1,55 +1,57 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => (
-  <footer style={{
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: '#111',
-    padding: '1.2rem 0 0.7rem 0',
-    borderTop: '1px solid #e2e8f0',
-    marginTop: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    boxShadow: '0 -2px 16px rgba(102, 126, 234, 0.07)'
-  }}>
-    <div style={{
-      maxWidth: '1200px',
-      margin: '0 auto',
-      display: 'flex',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      gap: '1.2rem',
-      padding: '0 1rem'
-    }}>
-      {/* Brand & Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
-        <span style={{
-          fontSize: '1.5rem',
-          fontWeight: '700',
-          color: 'white',
-          letterSpacing: '1px'
-        }}>
-          NextTrip
-        </span>
+  <footer className="nt-footer">
+    <div className="nt-container">
+      <div className="nt-footer__grid">
+        <div>
+          <Link to="/" className="nt-brand">
+            <span className="nt-brand__mark" aria-hidden="true">✦</span>
+            NextTrip
+          </Link>
+          <p>
+            Curated journeys across India and beyond. Small groups, local guides,
+            and itineraries built around the places worth slowing down for.
+          </p>
+        </div>
+
+        <div>
+          <h4>Explore</h4>
+          <ul>
+            <li><Link to="/">All tours</Link></li>
+            <li><Link to="/">Ongoing trips</Link></li>
+            <li><Link to="/">Upcoming trips</Link></li>
+            <li><Link to="/bookings">My bookings</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4>Company</h4>
+          <ul>
+            <li><Link to="/">About us</Link></li>
+            <li><Link to="/">How it works</Link></li>
+            <li><Link to="/">Travel stories</Link></li>
+            <li><Link to="/">Careers</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4>Get in touch</h4>
+          <ul>
+            <li><a href="mailto:info@nexttrip.com">info@nexttrip.com</a></li>
+            <li><a href="tel:+919876500000">+91 98765 00000</a></li>
+            <li>Bengaluru, India</li>
+          </ul>
+        </div>
       </div>
 
-      {/* Contact Details */}
-      <div style={{ fontSize: '1rem', lineHeight: '1.6', minWidth: '180px', color: '#111' }}>
-        <div style={{ fontWeight: 600, color: '#111' }}>Contact Us:</div>
-        <div>📧 <a href="mailto:info@nexttrip.com" style={{ color: '#111', textDecoration: 'none' }}>info@nexttrip.com</a></div>
-        <div>📞 <a href="tel:+919876XXXXX" style={{ color: '#111', textDecoration: 'none' }}>+91 98765 XXXXX</a></div>
-        <div>🏢 Bengaluru, India</div>
+      <div className="nt-footer__bottom">
+        <span>© {new Date().getFullYear()} NextTrip. All rights reserved.</span>
+        <span>Made for travellers, not tourists.</span>
       </div>
-    </div>
-    <div style={{
-      textAlign: 'center',
-      marginTop: '1rem',
-      color: '#222',
-      fontSize: '0.95rem',
-      letterSpacing: '0.5px'
-    }}>
-      © {new Date().getFullYear()} NextTrip. All rights reserved.
     </div>
   </footer>
 );
 
-export default Footer; 
+export default Footer;

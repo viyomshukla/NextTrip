@@ -1,13 +1,12 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import Footer from '../components/Footer';
-
+import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginType, setLoginType] = useState('user'); // 'user' or 'admin'
+  const [showPassword, setShowPassword] = useState(false);
   const { login, loading, error } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -24,217 +23,116 @@ const Login = () => {
   };
 
   return (
-    <>
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-      }}>
-        {/* Main Login Card */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '20px',
-          padding: '40px',
-          width: '100%',
-          maxWidth: '450px',
-          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          {/* Card Header */}
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <h1 style={{
-              fontSize: '28px',
-              fontWeight: '700',
-              color: '#2d3748',
-              margin: '0 0 10px 0',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>
-              🔐 Welcome Back
-            </h1>
-            <p style={{ color: '#718096', fontSize: '16px', margin: '0' }}>
-              Sign in to your account to continue
-            </p>
-          </div>
+    <div className="nt-auth">
+      <div className="nt-auth__form">
+        <div className="nt-auth__inner nt-rise">
+          <span className="nt-eyebrow">Welcome back</span>
+          <h1>Log in to NextTrip</h1>
+          <p className="nt-auth__sub">
+            Pick up where you left off and manage your upcoming trips.
+          </p>
 
-          {/* Login Type Toggle */}
-          <div style={{
-            display: 'flex',
-            marginBottom: '30px',
-            background: '#f7fafc',
-            borderRadius: '12px',
-            padding: '4px',
-            border: '1px solid #e2e8f0'
-          }}>
+          {error && <div className="nt-alert nt-alert--error">{error}</div>}
+
+          {/* Account type decides where a successful login lands. */}
+          <div className="nt-chips" style={{ marginBottom: '1.5rem' }}>
             <button
               type="button"
+              className={loginType === 'user' ? 'nt-chip nt-chip--on' : 'nt-chip'}
               onClick={() => setLoginType('user')}
-              style={{
-                flex: 1,
-                padding: '12px 20px',
-                border: 'none',
-                borderRadius: '8px',
-                background: loginType === 'user' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'transparent',
-                color: loginType === 'user' ? 'white' : '#4a5568',
-                cursor: 'pointer',
-                fontWeight: '600',
-                fontSize: '14px',
-                boxShadow: loginType === 'user' ? '0 4px 15px rgba(102, 126, 234, 0.3)' : 'none'
-              }}
             >
-              👤 User Login
+              Traveller
             </button>
             <button
               type="button"
+              className={loginType === 'admin' ? 'nt-chip nt-chip--on' : 'nt-chip'}
               onClick={() => setLoginType('admin')}
-              style={{
-                flex: 1,
-                padding: '12px 20px',
-                border: 'none',
-                borderRadius: '8px',
-                background: loginType === 'admin' ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' : 'transparent',
-                color: loginType === 'admin' ? 'white' : '#4a5568',
-                cursor: 'pointer',
-                fontWeight: '600',
-                fontSize: '14px',
-                boxShadow: loginType === 'admin' ? '0 4px 15px rgba(245, 87, 108, 0.3)' : 'none'
-              }}
             >
-              ⚡ Admin Login
+              Administrator
             </button>
           </div>
 
-          {/* Login Form */}
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: '#2d3748',
-                fontWeight: '600',
-                fontSize: '14px'
-              }}>
-                📧 Email Address
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  placeholder="Enter your email"
-                  style={{
-                    width: '100%',
-                    padding: '16px 20px',
-                    border: '2px solid #e2e8f0',
-                    borderRadius: '12px',
-                    fontSize: '16px',
-                    boxSizing: 'border-box',
-                    background: 'white'
-                  }}
-                />
-              </div>
+            <div className="nt-field">
+              <label className="nt-label" htmlFor="login-email">Email address</label>
+              <input
+                id="login-email"
+                className="nt-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
             </div>
 
-            <div style={{ marginBottom: '25px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: '#2d3748',
-                fontWeight: '600',
-                fontSize: '14px'
-              }}>
-                🔑 Password
-              </label>
+            <div className="nt-field">
+              <label className="nt-label" htmlFor="login-password">Password</label>
               <div style={{ position: 'relative' }}>
                 <input
-                  type="password"
+                  id="login-password"
+                  className="nt-input"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  style={{
-                    width: '100%',
-                    padding: '16px 20px',
-                    border: '2px solid #e2e8f0',
-                    borderRadius: '12px',
-                    fontSize: '16px',
-                    boxSizing: 'border-box',
-                    background: 'white'
-                  }}
+                  autoComplete="current-password"
+                  style={{ paddingRight: '3.25rem' }}
+                  required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute',
+                    right: '.6rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1.05rem',
+                    lineHeight: 1,
+                    padding: '.35rem',
+                  }}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
               </div>
             </div>
-
-            {error && (
-              <div style={{
-                background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
-                color: 'white',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                fontSize: '14px',
-                textAlign: 'center'
-              }}>
-                ⚠️ {error}
-              </div>
-            )}
 
             <button
               type="submit"
+              className="nt-btn nt-btn--primary nt-btn--block nt-btn--lg"
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '16px',
-                background: 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                boxShadow: '0 4px 15px rgba(78, 205, 196, 0.3)'
-              }}
+              style={{ marginTop: '1.5rem' }}
             >
-              {loading ? '🔄 Signing In...' : '🚀 Sign In'}
+              {loading ? 'Signing in…' : 'Log in'}
             </button>
           </form>
 
-          <div style={{
-            textAlign: 'center',
-            marginTop: '25px',
-            paddingTop: '25px',
-            borderTop: '1px solid #e2e8f0'
-          }}>
-            <p style={{ color: '#718096', fontSize: '14px', margin: '0 0 15px 0' }}>
-              Don't have an account?
-            </p>
-            <a
-              href="/signup"
-              style={{
-                color: '#667eea',
-                textDecoration: 'none',
-                fontWeight: '600',
-                fontSize: '14px'
-              }}
-            >
-              ✨ Create Account
-            </a>
-          </div>
+          <p className="nt-auth__alt">
+            New to NextTrip? <Link to="/signup">Create an account</Link>
+          </p>
         </div>
       </div>
-      <Footer />
-    </>
+
+      <aside className="nt-auth__aside">
+        <blockquote className="nt-quote">
+          The Ladakh route was the first trip where I never once felt like a tourist.
+          Ten of us, one guide who grew up in the valley, and zero filler days.
+          <cite>— Ananya R., Leh–Nubra crossing</cite>
+        </blockquote>
+        <h2>Trips worth taking time off for</h2>
+        <p>
+          Small groups, local guides, and itineraries that leave room for the
+          places you did not plan on.
+        </p>
+      </aside>
+    </div>
   );
 };
 
-export default Login; 
+export default Login;

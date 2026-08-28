@@ -1,12 +1,12 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import Footer from '../components/Footer';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Signup = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { signup, loading, error } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -18,202 +18,135 @@ const Signup = () => {
     }
   };
 
-  return (
-    <>
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-      }}>
-        {/* Main Signup Card */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '20px',
-          padding: '40px',
-          width: '100%',
-          maxWidth: '500px',
-          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          {/* Card Header */}
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <h1 style={{
-              fontSize: '28px',
-              fontWeight: '700',
-              color: '#2d3748',
-              margin: '0 0 10px 0',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>
-              ✨ Join NextTrip
-            </h1>
-            <p style={{ color: '#718096', fontSize: '16px', margin: '0' }}>
-              Create your account and start your journey
-            </p>
-          </div>
+  // Cheap inline strength read so people aren't surprised by a server rejection.
+  const strength = (() => {
+    if (!password) return null;
+    let score = 0;
+    if (password.length >= 8) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+    return [
+      { label: 'Too short', color: 'var(--danger)' },
+      { label: 'Weak', color: 'var(--danger)' },
+      { label: 'Fair', color: 'var(--warning)' },
+      { label: 'Good', color: 'var(--brand-600)' },
+      { label: 'Strong', color: 'var(--success)' },
+    ][score];
+  })();
 
-          {/* Signup Form */}
+  return (
+    <div className="nt-auth">
+      <div className="nt-auth__form">
+        <div className="nt-auth__inner nt-rise">
+          <span className="nt-eyebrow">Get started</span>
+          <h1>Create your account</h1>
+          <p className="nt-auth__sub">
+            Free to join. Browse live departures and hold a place in minutes.
+          </p>
+
+          {error && <div className="nt-alert nt-alert--error">{error}</div>}
+
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: '#2d3748',
-                fontWeight: '600',
-                fontSize: '14px'
-              }}>
-                👤 Full Name
-              </label>
+            <div className="nt-field">
+              <label className="nt-label" htmlFor="signup-name">Full name</label>
               <input
+                id="signup-name"
+                className="nt-input"
                 type="text"
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                autoComplete="name"
                 required
-                placeholder="Enter your full name"
-                style={{
-                  width: '100%',
-                  padding: '16px 20px',
-                  border: '2px solid #e2e8f0',
-                  borderRadius: '12px',
-                  fontSize: '16px',
-                  boxSizing: 'border-box',
-                  background: 'white'
-                }}
               />
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: '#2d3748',
-                fontWeight: '600',
-                fontSize: '14px'
-              }}>
-                📧 Email Address
-              </label>
+            <div className="nt-field">
+              <label className="nt-label" htmlFor="signup-email">Email address</label>
               <input
+                id="signup-email"
+                className="nt-input"
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
                 required
-                placeholder="Enter your email address"
-                style={{
-                  width: '100%',
-                  padding: '16px 20px',
-                  border: '2px solid #e2e8f0',
-                  borderRadius: '12px',
-                  fontSize: '16px',
-                  boxSizing: 'border-box',
-                  background: 'white'
-                }}
               />
             </div>
 
-            <div style={{ marginBottom: '25px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: '#2d3748',
-                fontWeight: '600',
-                fontSize: '14px'
-              }}>
-                🔑 Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                placeholder="Create a strong password"
-                style={{
-                  width: '100%',
-                  padding: '16px 20px',
-                  border: '2px solid #e2e8f0',
-                  borderRadius: '12px',
-                  fontSize: '16px',
-                  boxSizing: 'border-box',
-                  background: 'white'
-                }}
-              />
-              <p style={{
-                fontSize: '12px',
-                color: '#718096',
-                margin: '8px 0 0 0'
-              }}>
-                Password must be at least 6 characters long
-              </p>
-            </div>
-
-            {error && (
-              <div style={{
-                background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
-                color: 'white',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                fontSize: '14px',
-                textAlign: 'center'
-              }}>
-                ⚠️ {error}
+            <div className="nt-field">
+              <label className="nt-label" htmlFor="signup-password">Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  id="signup-password"
+                  className="nt-input"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  autoComplete="new-password"
+                  style={{ paddingRight: '3.25rem' }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute',
+                    right: '.6rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1.05rem',
+                    lineHeight: 1,
+                    padding: '.35rem',
+                  }}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
               </div>
-            )}
+              {strength && (
+                <div className="nt-help" style={{ color: strength.color, fontWeight: 600 }}>
+                  Password strength: {strength.label}
+                </div>
+              )}
+            </div>
 
             <button
               type="submit"
+              className="nt-btn nt-btn--primary nt-btn--block nt-btn--lg"
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '16px',
-                background: 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                boxShadow: '0 4px 15px rgba(78, 205, 196, 0.3)'
-              }}
+              style={{ marginTop: '1.5rem' }}
             >
-              {loading ? '🔄 Creating Account...' : '🚀 Create Account'}
+              {loading ? 'Creating account…' : 'Create account'}
             </button>
           </form>
 
-          <div style={{
-            textAlign: 'center',
-            marginTop: '25px',
-            paddingTop: '25px',
-            borderTop: '1px solid #e2e8f0'
-          }}>
-            <p style={{ color: '#718096', fontSize: '14px', margin: '0 0 15px 0' }}>
-              Already have an account?
-            </p>
-            <a
-              href="/login"
-              style={{
-                color: '#667eea',
-                textDecoration: 'none',
-                fontWeight: '600',
-                fontSize: '14px'
-              }}
-            >
-              🔐 Sign In
-            </a>
-          </div>
+          <p className="nt-auth__alt">
+            Already have an account? <Link to="/login">Log in</Link>
+          </p>
         </div>
       </div>
-      <Footer />
-    </>
+
+      <aside className="nt-auth__aside">
+        <blockquote className="nt-quote">
+          Booked on a Thursday, was on a bus through the Western Ghats by Saturday.
+          The whole thing took less time than picking a restaurant.
+          <cite>— Dev M., Kerala backwaters</cite>
+        </blockquote>
+        <h2>Ten travellers. One local guide.</h2>
+        <p>
+          Every NextTrip departure is capped small and run by someone who lives
+          where you are going.
+        </p>
+      </aside>
+    </div>
   );
 };
 
-export default Signup; 
+export default Signup;

@@ -1,8 +1,88 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import Footer from '../components/Footer';
 import API_BASE from '../config';
+
+const HERO_TILES = [
+  { cls: 'nt-tile--a nt-tile--tall', name: 'Himalayas', note: 'Treks & high passes' },
+  { cls: 'nt-tile--b', name: 'Rajasthan', note: 'Forts & desert' },
+  { cls: 'nt-tile--c', name: 'Kerala', note: 'Backwaters' },
+  { cls: 'nt-tile--d', name: 'Goa', note: 'Coast & culture' },
+];
+
+const FEATURES = [
+  { icon: '🧭', title: 'Local guides', body: 'Every trip is led by someone who actually lives there.' },
+  { icon: '👥', title: 'Small groups', body: 'Capped at ten travellers, so nothing feels like a coach tour.' },
+  { icon: '🛡️', title: 'Clear pricing', body: 'The price you see covers the itinerary. No surprise add-ons.' },
+  { icon: '⚡', title: 'Fast booking', body: 'Reserve a place in a couple of minutes, traveller details included.' },
+];
+
+const CATEGORIES = ['All', 'Adventure', 'Beach', 'Cultural', 'Wildlife', 'Mountain'];
+
+// Skeletons hold the grid's shape while tours load, avoiding a layout jump.
+const TourSkeleton = () => (
+  <div className="nt-tour" aria-hidden="true">
+    <div className="nt-skeleton nt-skeleton--media" />
+    <div className="nt-tour__body">
+      <div className="nt-skeleton nt-skeleton--line" style={{ width: '70%', height: 18 }} />
+      <div className="nt-skeleton nt-skeleton--line" style={{ width: '45%' }} />
+      <div className="nt-skeleton nt-skeleton--line" style={{ width: '90%' }} />
+      <div className="nt-skeleton nt-skeleton--line" style={{ width: '60%' }} />
+    </div>
+  </div>
+);
+
+const TourCard = ({ tour, onBook, onPeek }) => {
+  const isOngoing = tour.status === 'ongoing';
+  return (
+    <article className="nt-tour nt-rise">
+      <div className={tour.image ? 'nt-tour__media' : 'nt-tour__media nt-tour__media--empty'}>
+        {tour.image ? (
+          <img
+            src={tour.image}
+            alt={tour.title}
+            loading="lazy"
+            onError={(e) => {
+              // Fall back to the gradient placeholder if the URL is dead.
+              e.target.style.display = 'none';
+            }}
+          />
+        ) : (
+          <span aria-hidden="true">🏔️</span>
+        )}
+        <span className={`nt-badge nt-badge--float ${isOngoing ? 'nt-badge--live' : 'nt-badge--soon'}`}>
+          {isOngoing ? '● Booking open' : '◷ Coming soon'}
+        </span>
+      </div>
+
+      <div className="nt-tour__body">
+        <h3 className="nt-tour__title">{tour.title}</h3>
+
+        <p className="nt-tour__loc">
+          📍 {tour.location || 'Location to be announced'}
+          {tour.duration ? ` · ${tour.duration} days` : ''}
+        </p>
+
+        {tour.description && <p className="nt-tour__desc">{tour.description}</p>}
+
+        <div className="nt-tour__foot">
+          <div className="nt-price">
+            ₹{Number(tour.price).toLocaleString('en-IN')} <span>/ person</span>
+          </div>
+          {isOngoing ? (
+            <button className="nt-btn nt-btn--accent nt-btn--sm" onClick={() => onBook(tour._id)}>
+              Book now
+            </button>
+          ) : (
+            <button className="nt-btn nt-btn--ghost nt-btn--sm" onClick={onPeek}>
+              Details
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+};
 
 const Home = () => {
   const { user } = useContext(AuthContext);
@@ -10,6 +90,8 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showUpcomingDialog, setShowUpcomingDialog] = useState(false);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('All');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,598 +115,295 @@ const Home = () => {
       }
     };
     if (user) fetchTours();
+    else setLoading(false);
   }, [user]);
 
-  if (loading) return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: '#4a5568',
-      fontSize: '1.5rem',
-      fontWeight: '600'
-    }}>
-      <div style={{
-        textAlign: 'center'
-      }}>
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚀</div>
-        Loading NextTrip...
-      </div>
-    </div>
-  );
+  // Filtering is client-side over the already-fetched list, so it stays instant.
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return tours.filter((t) => {
+      const matchesQuery =
+        !q ||
+        [t.title, t.location, t.description].some((f) => (f || '').toLowerCase().includes(q));
+      const matchesCat =
+        category === 'All' || (t.category || '').toLowerCase() === category.toLowerCase();
+      return matchesQuery && matchesCat;
+    });
+  }, [tours, query, category]);
 
-  if (error) return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: '#4a5568'
-    }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
-        {error}
-      </div>
-    </div>
-  );
+  const ongoing = visible.filter((t) => t.status === 'ongoing');
+  const upcoming = visible.filter((t) => t.status === 'upcoming');
 
-  // Admin Dashboard View
-  if (user && user.role === 'admin') {
+  /* ------------------------------------------------------ guest landing ---- */
+  if (!user) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-        padding: '2rem',
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{
-            textAlign: 'center',
-            marginBottom: '3rem',
-            color: '#2d3748'
-          }}>
-            <h1 style={{
-              fontSize: '3rem',
-              fontWeight: '700',
-              margin: '0 0 1rem 0',
-              textShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-              background: 'linear-gradient(45deg, #667eea, #764ba2)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>
-              🏠 NextTrip Admin Dashboard
-            </h1>
-            <p style={{
-              fontSize: '1.2rem',
-              opacity: 0.8,
-              margin: '0',
-              color: '#4a5568'
-            }}>
-              Welcome back, {user.name}! 🎉
-            </p>
-          </div>
-          
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-            gap: '2rem'
-          }}>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '20px',
-              padding: '2rem',
-              textAlign: 'center',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-            }}>
-              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>👥</div>
-              <h3 style={{ color: '#2d3748', margin: '0 0 1rem 0', fontSize: '1.5rem' }}>Manage Users</h3>
-              <p style={{ color: '#4a5568', margin: '0 0 2rem 0' }}>Create, view, and manage all users</p>
-              <Link to="/admin" style={{
-                display: 'inline-block',
-                padding: '12px 24px',
-                background: 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '25px',
-                fontWeight: '600',
-                boxShadow: '0 4px 15px rgba(78, 205, 196, 0.3)'
-              }}>
-                Go to Users
-              </Link>
-            </div>
-            
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '20px',
-              padding: '2rem',
-              textAlign: 'center',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-            }}>
-              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🗺️</div>
-              <h3 style={{ color: '#2d3748', margin: '0 0 1rem 0', fontSize: '1.5rem' }}>Manage Tours</h3>
-              <p style={{ color: '#4a5568', margin: '0 0 2rem 0' }}>Create, edit, and delete tours</p>
-              <Link to="/admin" style={{
-                display: 'inline-block',
-                padding: '12px 24px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '25px',
-                fontWeight: '600',
-                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
-              }}>
-                Go to Tours
-              </Link>
-            </div>
-            
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '20px',
-              padding: '2rem',
-              textAlign: 'center',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-            }}>
-              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📊</div>
-              <h3 style={{ color: '#2d3748', margin: '0 0 1rem 0', fontSize: '1.5rem' }}>View Bookings</h3>
-              <p style={{ color: '#4a5568', margin: '0 0 2rem 0' }}>Monitor all bookings across the platform</p>
-              <Link to="/admin" style={{
-                display: 'inline-block',
-                padding: '12px 24px',
-                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '25px',
-                fontWeight: '600',
-                boxShadow: '0 4px 15px rgba(240, 147, 251, 0.3)'
-              }}>
-                View Bookings
-              </Link>
+      <>
+        <section className="nt-hero">
+          <div className="nt-container">
+            <div className="nt-hero__grid">
+              <div className="nt-rise">
+                <span className="nt-eyebrow">✦ Small-group travel</span>
+                <h1>
+                  Go somewhere that <span className="nt-hero__accent">stays with you</span>
+                </h1>
+                <p className="nt-lead">
+                  Handpicked trips across India, led by local guides who know the routes,
+                  the seasons, and the places that never make the guidebooks.
+                </p>
+                <div className="nt-hero__cta">
+                  <Link to="/signup" className="nt-btn nt-btn--accent nt-btn--lg">
+                    Start exploring
+                  </Link>
+                  <Link to="/login" className="nt-btn nt-btn--ghost nt-btn--lg">
+                    I have an account
+                  </Link>
+                </div>
+
+                <div className="nt-hero__stats">
+                  <div>
+                    <div className="nt-stat__num">40+</div>
+                    <div className="nt-stat__label">Curated routes</div>
+                  </div>
+                  <div>
+                    <div className="nt-stat__num">10</div>
+                    <div className="nt-stat__label">Travellers max</div>
+                  </div>
+                  <div>
+                    <div className="nt-stat__num">4.8★</div>
+                    <div className="nt-stat__label">Average rating</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="nt-hero__art" aria-hidden="true">
+                {HERO_TILES.map((t) => (
+                  <div key={t.name} className={`nt-tile ${t.cls}`}>
+                    {t.name}
+                    <span>{t.note}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+
+        <section className="nt-section">
+          <div className="nt-container">
+            <div className="nt-section-head">
+              <h2>Why travellers pick NextTrip</h2>
+              <p>Fewer people, better guides, and a booking flow that respects your time.</p>
+            </div>
+            <div className="nt-grid nt-grid--4">
+              {FEATURES.map((f) => (
+                <div key={f.title} className="nt-feature">
+                  <div className="nt-feature__icon" aria-hidden="true">{f.icon}</div>
+                  <h3>{f.title}</h3>
+                  <p>{f.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="nt-section nt-section--tight">
+          <div className="nt-container">
+            <div className="nt-cta">
+              <h2>Your next trip is one account away</h2>
+              <p>
+                Create a free account to browse live departures, see who is guiding each
+                route, and hold a place before it fills.
+              </p>
+              <div style={{ marginTop: '1.75rem' }}>
+                <Link to="/signup" className="nt-btn nt-btn--accent nt-btn--lg">
+                  Create free account
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      </>
     );
   }
 
-  // Regular User View
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      padding: '2rem',
-      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Hero Section */}
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '4rem',
-          color: '#2d3748'
-        }}>
-          <h1 style={{
-            fontSize: '3.5rem',
-            fontWeight: '700',
-            margin: '0 0 1rem 0',
-            textShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-            background: 'linear-gradient(45deg, #667eea, #764ba2)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            Welcome to NextTrip
+  /* ------------------------------------------------------------- admin ---- */
+  if (user.role === 'admin') {
+    return (
+      <section className="nt-section">
+        <div className="nt-container">
+          <span className="nt-eyebrow">Admin</span>
+          <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)' }}>
+            Welcome back, {user.name}
           </h1>
-          <p style={{
-            fontSize: '1.3rem',
-            opacity: 0.8,
-            maxWidth: '600px',
-            margin: '0 auto',
-            color: '#4a5568'
-          }}>
-            Discover amazing destinations and create unforgettable memories with our curated tour experiences
+          <p className="nt-lead" style={{ marginBottom: '2.5rem' }}>
+            Manage users, tours, and bookings across the platform.
           </p>
-        </div>
 
-        {/* Ongoing Tours Section */}
-        <div style={{ marginBottom: '4rem' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: '2rem',
-            gap: '1rem'
-          }}>
-            <div style={{
-              width: '60px',
-              height: '60px',
-              background: 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '2rem',
-              boxShadow: '0 8px 25px rgba(78, 205, 196, 0.3)'
-            }}>
-              🟢
-            </div>
-            <h2 style={{
-              color: '#2d3748',
-              margin: '0',
-              fontSize: '2.5rem',
-              fontWeight: '600',
-              textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-            }}>
-              Ongoing Tours
-            </h2>
-          </div>
-
-          {tours.filter(tour => tour.status === 'ongoing').length === 0 ? (
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '20px',
-              padding: '3rem',
-              textAlign: 'center',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              color: '#4a5568'
-            }}>
-              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🌍</div>
-              <p style={{ margin: '0', fontSize: '1.2rem', opacity: 0.8 }}>No ongoing tours at the moment.</p>
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-              gap: '2rem'
-            }}>
-              {tours.filter(tour => tour.status === 'ongoing').map(tour => (
-                <div key={tour._id} style={{
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(20px)',
-                  borderRadius: '20px',
-                  padding: '2rem',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  transform: 'perspective(1000px) rotateY(0deg)',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                >
-                  {/* Status Badge */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    background: 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)',
-                    color: 'white',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '20px',
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    boxShadow: '0 4px 15px rgba(78, 205, 196, 0.3)'
-                  }}>
-                    🟢 Active
-                  </div>
-
-                  {tour.image && (
-                    <div style={{
-                      marginBottom: '1.5rem',
-                      textAlign: 'center'
-                    }}>
-                      <img
-                        src={tour.image}
-                        alt={tour.name || tour.title}
-                        style={{
-                          width: '200px',
-                          height: '200px',
-                          borderRadius: '20px',
-                          objectFit: 'cover',
-                          border: '3px solid rgba(255, 255, 255, 0.5)',
-                          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)'
-                        }}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  <h3 style={{
-                    color: '#2d3748',
-                    margin: '0 0 1rem 0',
-                    fontSize: '1.5rem',
-                    fontWeight: '600'
-                  }}>
-                    {tour.name || tour.title}
-                  </h3>
-
-                  <div style={{
-                    color: '#4a5568',
-                    marginBottom: '2rem',
-                    lineHeight: '1.6'
-                  }}>
-                    <p style={{ margin: '0 0 0.5rem 0' }}>
-                      <strong>📍 Location:</strong> {tour.location}
-                    </p>
-                    <p style={{ margin: '0 0 0.5rem 0' }}>
-                      <strong>⏱️ Duration:</strong> {tour.duration} days
-                    </p>
-                    <p style={{ margin: '0 0 0.5rem 0' }}>
-                      <strong>💰 Price:</strong> ₹{tour.price}
-                    </p>
-                    <p style={{ margin: '0' }}>
-                      <strong>📝 Description:</strong> {tour.description}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => navigate(`/book-tour/${tour._id}`)}
-                    style={{
-                      width: '100%',
-                      padding: '1rem',
-                      background: 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '15px',
-                      cursor: 'pointer',
-                      fontSize: '1.1rem',
-                      fontWeight: '600',
-                      transition: 'all 0.3s ease',
-                      boxShadow: '0 4px 15px rgba(78, 205, 196, 0.3)'
-                    }}
-                  >
-                    Book This Tour
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Upcoming Tours Section */}
-        <div style={{ marginBottom: '4rem' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: '2rem',
-            gap: '1rem'
-          }}>
-            <div style={{
-              width: '60px',
-              height: '60px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '2rem',
-              boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)'
-            }}>
-              🔵
-            </div>
-            <h2 style={{
-              color: '#2d3748',
-              margin: '0',
-              fontSize: '2.5rem',
-              fontWeight: '600',
-              textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-            }}>
-              Upcoming Tours
-            </h2>
-          </div>
-
-          {tours.filter(tour => tour.status === 'upcoming').length === 0 ? (
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '20px',
-              padding: '3rem',
-              textAlign: 'center',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              color: '#4a5568'
-            }}>
-              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⏰</div>
-              <p style={{ margin: '0', fontSize: '1.2rem', opacity: 0.8 }}>No upcoming tours available at the moment.</p>
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-              gap: '2rem'
-            }}>
-              {tours.filter(tour => tour.status === 'upcoming').map(tour => (
-                <div key={tour._id} style={{
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(20px)',
-                  borderRadius: '20px',
-                  padding: '2rem',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  transform: 'perspective(1000px) rotateY(0deg)',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                >
-                  {/* Status Badge */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '20px',
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
-                  }}>
-                    🔵 Coming Soon
-                  </div>
-
-                  {tour.image && (
-                    <div style={{
-                      marginBottom: '1.5rem',
-                      textAlign: 'center'
-                    }}>
-                      <img
-                        src={tour.image}
-                        alt={tour.name || tour.title}
-                        style={{
-                          width: '200px',
-                          height: '200px',
-                          borderRadius: '20px',
-                          objectFit: 'cover',
-                          border: '3px solid rgba(255, 255, 255, 0.5)',
-                          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)'
-                        }}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  <h3 style={{
-                    color: '#2d3748',
-                    margin: '0 0 1rem 0',
-                    fontSize: '1.5rem',
-                    fontWeight: '600'
-                  }}>
-                    {tour.name || tour.title}
-                  </h3>
-
-                  <div style={{
-                    color: '#4a5568',
-                    marginBottom: '2rem',
-                    lineHeight: '1.6'
-                  }}>
-                    <p style={{ margin: '0 0 0.5rem 0' }}>
-                      <strong>📍 Location:</strong> {tour.location}
-                    </p>
-                    <p style={{ margin: '0 0 0.5rem 0' }}>
-                      <strong>⏱️ Duration:</strong> {tour.duration} days
-                    </p>
-                    <p style={{ margin: '0 0 0.5rem 0' }}>
-                      <strong>💰 Price:</strong> ₹{tour.price}
-                    </p>
-                    <p style={{ margin: '0' }}>
-                      <strong>📝 Description:</strong> {tour.description}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      if (tour.status === 'upcoming') {
-                        setShowUpcomingDialog(true);
-                      } else {
-                        navigate(`/book-tour/${tour._id}`);
-                      }
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '1rem',
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '15px',
-                      cursor: 'pointer',
-                      fontSize: '1.1rem',
-                      fontWeight: '600',
-                      transition: 'all 0.3s ease',
-                      boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
-                    }}
-                  >
-                    ⏰ Coming Soon
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Upcoming Tour Dialog */}
-        {showUpcomingDialog && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            backdropFilter: 'blur(10px)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(20px)',
-              padding: '3rem',
-              borderRadius: '20px',
-              maxWidth: '500px',
-              width: '90%',
-              textAlign: 'center',
-              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              transform: 'perspective(1000px) rotateY(0deg)',
-              animation: 'slideIn 0.3s ease'
-            }}>
-              <div style={{
-                fontSize: '4rem',
-                marginBottom: '1.5rem'
-              }}>
-                ⏰
+          <div className="nt-grid nt-grid--3">
+            {[
+              { icon: '👥', title: 'Users', body: 'Create, view, and manage every account.' },
+              { icon: '🗺️', title: 'Tours', body: 'Publish new routes, edit details, retire old ones.' },
+              { icon: '📊', title: 'Bookings', body: 'Monitor reservations across the platform.' },
+            ].map((c) => (
+              <div key={c.title} className="nt-card nt-card--pad nt-feature">
+                <div className="nt-feature__icon" aria-hidden="true">{c.icon}</div>
+                <h3>{c.title}</h3>
+                <p style={{ marginBottom: '1.5rem' }}>{c.body}</p>
+                <Link to="/admin" className="nt-btn nt-btn--primary nt-btn--sm">
+                  Open dashboard
+                </Link>
               </div>
-              <h3 style={{
-                margin: '0 0 1rem 0',
-                color: '#667eea',
-                fontSize: '1.8rem',
-                fontWeight: '600'
-              }}>
-                Tour Not Active Yet
-              </h3>
-              <p style={{
-                margin: '0 0 2rem 0',
-                color: '#4a5568',
-                lineHeight: '1.6',
-                fontSize: '1.1rem'
-              }}>
-                This tour is currently marked as "Upcoming" and is not available for booking yet. 
-                Please check back later or contact the admin for more information.
-              </p>
-              <button
-                onClick={() => setShowUpcomingDialog(false)}
-                style={{
-                  padding: '1rem 2rem',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '15px',
-                  cursor: 'pointer',
-                  fontSize: '1.1rem',
-                  fontWeight: '600',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
-                }}
-              >
-                Got it!
-              </button>
-            </div>
+            ))}
           </div>
-        )}
-      </div>
-      <Footer />
-    </div>
+        </div>
+      </section>
+    );
+  }
+
+  /* -------------------------------------------------- signed-in browsing ---- */
+  return (
+    <>
+      <section className="nt-hero">
+        <div className="nt-container">
+          <span className="nt-eyebrow">✦ Welcome back, {user.name}</span>
+          <h1 style={{ maxWidth: '16ch' }}>
+            Where are you <span className="nt-hero__accent">going next?</span>
+          </h1>
+          <p className="nt-lead" style={{ marginBottom: '2rem' }}>
+            Browse live departures and hold your place in a few taps.
+          </p>
+
+          <div className="nt-search">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search destinations, tours, or regions"
+              aria-label="Search tours"
+            />
+            <span className="nt-btn nt-btn--primary" aria-hidden="true">Search</span>
+          </div>
+
+          <div className="nt-chips" style={{ marginTop: '1.25rem' }}>
+            {CATEGORIES.map((c) => (
+              <button
+                key={c}
+                className={category === c ? 'nt-chip nt-chip--on' : 'nt-chip'}
+                onClick={() => setCategory(c)}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="nt-section">
+        <div className="nt-container">
+          {error && <div className="nt-alert nt-alert--error">{error}</div>}
+
+          {/* Ongoing */}
+          <div style={{ marginBottom: '4rem' }}>
+            <div className="nt-row nt-section-head">
+              <div>
+                <span className="nt-badge nt-badge--live">● Booking open</span>
+                <h2 style={{ marginTop: '.75rem', marginBottom: '.25rem' }}>Ongoing tours</h2>
+                <p>Departures you can join right now.</p>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="nt-grid nt-grid--tours">
+                {[0, 1, 2].map((i) => <TourSkeleton key={i} />)}
+              </div>
+            ) : ongoing.length === 0 ? (
+              <div className="nt-empty">
+                <div className="nt-empty__icon" aria-hidden="true">🧭</div>
+                <h3>No tours match that search</h3>
+                <p>Try a different destination or clear your filters.</p>
+                <button
+                  className="nt-btn nt-btn--ghost"
+                  onClick={() => { setQuery(''); setCategory('All'); }}
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <div className="nt-grid nt-grid--tours">
+                {ongoing.map((tour) => (
+                  <TourCard
+                    key={tour._id}
+                    tour={tour}
+                    onBook={(id) => navigate(`/book-tour/${id}`)}
+                    onPeek={() => setShowUpcomingDialog(true)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Upcoming */}
+          <div>
+            <div className="nt-row nt-section-head">
+              <div>
+                <span className="nt-badge nt-badge--soon">◷ Coming soon</span>
+                <h2 style={{ marginTop: '.75rem', marginBottom: '.25rem' }}>Upcoming tours</h2>
+                <p>Routes opening for booking shortly.</p>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="nt-grid nt-grid--tours">
+                {[0, 1, 2].map((i) => <TourSkeleton key={i} />)}
+              </div>
+            ) : upcoming.length === 0 ? (
+              <div className="nt-empty">
+                <div className="nt-empty__icon" aria-hidden="true">⏳</div>
+                <h3>Nothing upcoming yet</h3>
+                <p>New departures are added regularly — check back soon.</p>
+              </div>
+            ) : (
+              <div className="nt-grid nt-grid--tours">
+                {upcoming.map((tour) => (
+                  <TourCard
+                    key={tour._id}
+                    tour={tour}
+                    onBook={(id) => navigate(`/book-tour/${id}`)}
+                    onPeek={() => setShowUpcomingDialog(true)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {showUpcomingDialog && (
+        <div
+          className="nt-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="nt-upcoming-title"
+          onClick={() => setShowUpcomingDialog(false)}
+        >
+          <div className="nt-modal__panel" onClick={(e) => e.stopPropagation()}>
+            <div className="nt-empty__icon" aria-hidden="true">⏳</div>
+            <h3 id="nt-upcoming-title">Not open for booking yet</h3>
+            <p style={{ color: 'var(--muted)' }}>
+              This tour is still marked upcoming. We will open places as soon as the
+              departure is confirmed — check back shortly.
+            </p>
+            <button
+              className="nt-btn nt-btn--primary nt-btn--block"
+              style={{ marginTop: '1.5rem' }}
+              onClick={() => setShowUpcomingDialog(false)}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
-export default Home; 
+export default Home;

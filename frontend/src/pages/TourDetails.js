@@ -1,21 +1,24 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import API_BASE from '../config';
+
+const Stars = ({ value }) => (
+  <span aria-label={`${value} out of 5`} style={{ color: 'var(--accent-500)', letterSpacing: '.06em' }}>
+    {'★'.repeat(Math.round(value))}
+    <span style={{ color: 'var(--border-2)' }}>{'★'.repeat(5 - Math.round(value))}</span>
+  </span>
+);
 
 const TourDetails = () => {
   const { id } = useParams();
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [tour, setTour] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
-  const [bookingDate, setBookingDate] = useState('');
-  const [bookingMsg, setBookingMsg] = useState('');
-
-  // Get today's date in YYYY-MM-DD format for minimum date
-  const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     const fetchTourAndReviews = async () => {
@@ -23,15 +26,15 @@ const TourDetails = () => {
         setLoading(true);
         setError(null);
         const [tourRes, reviewsRes] = await Promise.all([
-          fetch(`${API_BASE}/api/tours/${id}`, { 
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } 
+          fetch(`${API_BASE}/api/tours/${id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
           }),
           fetch(`${API_BASE}/api/reviews/tour/${id}`)
         ]);
         const tourData = await tourRes.json();
         const reviewsData = await reviewsRes.json();
         setTour(tourData);
-        setReviews(reviewsData);
+        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
       } catch (err) {
         setError('Failed to load tour details');
       } finally {
@@ -40,38 +43,6 @@ const TourDetails = () => {
     };
     if (id) fetchTourAndReviews();
   }, [id]);
-
-  const handleBook = async (e) => {
-    e.preventDefault();
-    setBookingMsg('');
-    if (!bookingDate) {
-      setBookingMsg('Please select a date.');
-      return;
-    }
-    if (bookingDate < today) {
-      setBookingMsg('Cannot book for past dates. Please select a future date.');
-      return;
-    }
-    try {
-      const response = await fetch(`${API_BASE}/api/bookings`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}` 
-        },
-        body: JSON.stringify({ tour: id, date: bookingDate })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setBookingMsg('Booking successful!');
-        setBookingDate('');
-      } else {
-        setBookingMsg(data.error || 'Booking failed. Please try again.');
-      }
-    } catch (err) {
-      setBookingMsg('Booking failed. Please try again.');
-    }
-  };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -83,19 +54,17 @@ const TourDetails = () => {
     try {
       const response = await fetch(`${API_BASE}/api/reviews/tour/${id}`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}` 
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(newReview)
       });
       if (response.ok) {
         setNewReview({ rating: 5, comment: '' });
-        // Refresh reviews
         const reviewsRes = await fetch(`${API_BASE}/api/reviews/tour/${id}`);
         const reviewsData = await reviewsRes.json();
-        setReviews(reviewsData);
-        alert('Review submitted successfully!');
+        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
       } else {
         alert('Failed to submit review');
       }
@@ -112,7 +81,6 @@ const TourDetails = () => {
       });
       if (response.ok) {
         setReviews(reviews.filter(r => r._id !== reviewId));
-        alert('Review deleted successfully!');
       } else {
         alert('Failed to delete review');
       }
@@ -121,136 +89,196 @@ const TourDetails = () => {
     }
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>;
-  if (error) return <div style={{ textAlign: 'center', padding: '2rem', color: 'red' }}>{error}</div>;
-  if (!tour) return <div style={{ textAlign: 'center', padding: '2rem' }}>Tour not found</div>;
+  if (loading) {
+    return (
+      <div className="nt-center-screen">
+        <div>
+          <div className="nt-spinner" />
+          Loading tour…
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !tour || !tour._id) {
+    return (
+      <section className="nt-section">
+        <div className="nt-container">
+          <div className="nt-empty">
+            <div className="nt-empty__icon" aria-hidden="true">🧭</div>
+            <h3>We couldn't load this tour</h3>
+            <p>{error || 'It may have been removed or is no longer available.'}</p>
+            <Link to="/" className="nt-btn nt-btn--primary">Back to tours</Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const avgRating = reviews.length
+    ? reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / reviews.length
+    : null;
+  const isOngoing = tour.status === 'ongoing';
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
-        {/* Tour Details */}
-        <div>
-          <h1 style={{ marginTop: '0' }}>{tour.title}</h1>
-          <p><strong>Description:</strong> {tour.description}</p>
-          <p><strong>Duration:</strong> {tour.duration} days</p>
-          <p><strong>Location:</strong> {tour.location}</p>
-          <p><strong>Price:</strong> ${tour.price}</p>
-          
-          {/* Reviews Section */}
-          <div style={{ marginTop: '2rem' }}>
-            <h2>Reviews</h2>
-            {reviews.length === 0 ? (
-              <p>No reviews yet.</p>
-            ) : (
-              <div style={{ display: 'grid', gap: '1rem' }}>
-                {reviews.map(review => (
-                  <div key={review._id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1rem', backgroundColor: '#f9f9f9' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <p><strong>{review.user.name}</strong> - {review.rating}/5 stars</p>
-                        <p>{review.comment}</p>
-                        <small>{new Date(review.createdAt).toLocaleDateString()}</small>
-                      </div>
-                      {(user && (user._id === review.user._id || user.role === 'admin')) && (
-                        <button 
-                          onClick={() => handleDeleteReview(review._id)}
-                          style={{ 
-                            backgroundColor: '#dc3545', 
-                            color: 'white', 
-                            border: 'none', 
-                            padding: '0.25rem 0.5rem', 
-                            borderRadius: '4px', 
-                            cursor: 'pointer' 
-                          }}
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add Review Form */}
-            {user && (
-              <div style={{ marginTop: '2rem', border: '1px solid #ddd', borderRadius: '8px', padding: '1rem' }}>
-                <h3>Add Review</h3>
-                <form onSubmit={handleReviewSubmit}>
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label>Rating:</label><br />
-                    <select 
-                      value={newReview.rating} 
-                      onChange={e => setNewReview({...newReview, rating: parseInt(e.target.value)})}
-                      style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-                    >
-                      <option value={5}>5 stars</option>
-                      <option value={4}>4 stars</option>
-                      <option value={3}>3 stars</option>
-                      <option value={2}>2 stars</option>
-                      <option value={1}>1 star</option>
-                    </select>
-                  </div>
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label>Comment:</label><br />
-                    <textarea 
-                      value={newReview.comment} 
-                      onChange={e => setNewReview({...newReview, comment: e.target.value})} 
-                      required 
-                      style={{ width: '100%', padding: '8px', marginTop: '5px', minHeight: '100px' }}
-                    />
-                  </div>
-                  <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    Submit Review
-                  </button>
-                </form>
-              </div>
+    <>
+      {/* Hero banner uses the tour image when present, gradient otherwise. */}
+      <header
+        style={{
+          position: 'relative',
+          minHeight: 'clamp(260px, 42vw, 440px)',
+          display: 'flex',
+          alignItems: 'flex-end',
+          background: tour.image
+            ? `linear-gradient(to top, rgba(15,23,42,.88), rgba(15,23,42,.25)), url(${tour.image}) center/cover`
+            : 'linear-gradient(150deg, var(--brand-700), var(--brand-900))',
+          color: '#fff',
+        }}
+      >
+        <div className="nt-container" style={{ paddingBlock: '2.5rem' }}>
+          <span className={`nt-badge ${isOngoing ? 'nt-badge--live' : 'nt-badge--soon'}`}>
+            {isOngoing ? '● Booking open' : '◷ Coming soon'}
+          </span>
+          <h1 style={{ color: '#fff', margin: '.85rem 0 .5rem' }}>{tour.title}</h1>
+          <div className="nt-meta" style={{ color: 'rgba(255,255,255,.85)' }}>
+            <span className="nt-meta__item">📍 {tour.location || 'To be announced'}</span>
+            {tour.duration && <span className="nt-meta__item">⏱️ {tour.duration} days</span>}
+            {tour.category && <span className="nt-meta__item">🏷️ {tour.category}</span>}
+            {avgRating && (
+              <span className="nt-meta__item">
+                <Stars value={avgRating} /> {avgRating.toFixed(1)} ({reviews.length})
+              </span>
             )}
           </div>
         </div>
+      </header>
 
-        {/* Booking Section */}
-        <div style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1rem', height: 'fit-content' }}>
-          <h2>Book This Tour</h2>
-          <form onSubmit={handleBook}>
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Booking Date:</label><br />
-              <div style={{
-                fontSize: '0.8rem',
-                color: '#666',
-                marginBottom: '0.25rem',
-                fontStyle: 'italic'
-              }}>
-                Only future dates are allowed
+      <section className="nt-section nt-section--tight">
+        <div className="nt-container">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'minmax(0, 1.7fr) minmax(280px, 1fr)',
+              gap: '2.5rem',
+              alignItems: 'start',
+            }}
+            className="nt-details__grid"
+          >
+            <div>
+              <h2>About this trip</h2>
+              <p style={{ color: 'var(--muted)', fontSize: '1.02rem' }}>
+                {tour.description || 'A full itinerary for this tour is coming soon.'}
+              </p>
+
+              <hr style={{ border: 0, borderTop: '1px solid var(--border)', margin: '2.5rem 0' }} />
+
+              <div className="nt-row" style={{ marginBottom: '1.5rem' }}>
+                <h2 style={{ margin: 0 }}>
+                  Reviews {reviews.length > 0 && <span style={{ color: 'var(--muted)' }}>({reviews.length})</span>}
+                </h2>
               </div>
-              <input 
-                type="date" 
-                value={bookingDate} 
-                onChange={e => setBookingDate(e.target.value)} 
-                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-                min={today}
-              />
+
+              {reviews.length === 0 ? (
+                <div className="nt-empty" style={{ padding: '2rem' }}>
+                  <p style={{ margin: 0 }}>No reviews yet — be the first to share your experience.</p>
+                </div>
+              ) : (
+                <div className="nt-stack">
+                  {reviews.map((r) => (
+                    <div key={r._id} className="nt-card nt-card--pad">
+                      <div className="nt-row" style={{ marginBottom: '.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+                          <span className="nt-avatar">{(r.user?.name || '?').charAt(0)}</span>
+                          <div>
+                            <div style={{ fontWeight: 700 }}>{r.user?.name || 'Traveller'}</div>
+                            <Stars value={r.rating} />
+                          </div>
+                        </div>
+                        {user && (r.user?._id === user.id || user.role === 'admin') && (
+                          <button
+                            className="nt-btn nt-btn--quiet nt-btn--sm"
+                            onClick={() => handleDeleteReview(r._id)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                      <p style={{ color: 'var(--muted)', margin: 0 }}>{r.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {user && (
+                <div className="nt-card nt-card--pad" style={{ marginTop: '1.5rem' }}>
+                  <h3>Leave a review</h3>
+                  <form onSubmit={handleReviewSubmit}>
+                    <div className="nt-field">
+                      <label className="nt-label" htmlFor="review-rating">Rating</label>
+                      <select
+                        id="review-rating"
+                        className="nt-select"
+                        value={newReview.rating}
+                        onChange={(e) => setNewReview({ ...newReview, rating: Number(e.target.value) })}
+                      >
+                        {[5, 4, 3, 2, 1].map((n) => (
+                          <option key={n} value={n}>{'★'.repeat(n)} — {n} star{n > 1 ? 's' : ''}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="nt-field">
+                      <label className="nt-label" htmlFor="review-comment">Your experience</label>
+                      <textarea
+                        id="review-comment"
+                        className="nt-textarea"
+                        value={newReview.comment}
+                        onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                        placeholder="What stood out? What should other travellers know?"
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="nt-btn nt-btn--primary">Post review</button>
+                  </form>
+                </div>
+              )}
             </div>
-            <button 
-              type="submit"
-              style={{ 
-                width: '100%', 
-                padding: '10px', 
-                backgroundColor: '#28a745', 
-                color: 'white', 
-                border: 'none', 
-                borderRadius: '4px', 
-                cursor: 'pointer' 
-              }}
+
+            {/* Sticky booking panel is the standard travel-site conversion pattern. */}
+            <aside
+              className="nt-card nt-card--pad"
+              style={{ position: 'sticky', top: 'calc(var(--nav-h) + 1.5rem)' }}
             >
-              Book Tour
-            </button>
-            {bookingMsg && <p style={{ color: bookingMsg.includes('successful') ? 'green' : 'red', marginTop: '10px' }}>{bookingMsg}</p>}
-          </form>
+              <div className="nt-price" style={{ fontSize: '2rem' }}>
+                ₹{Number(tour.price).toLocaleString('en-IN')} <span>/ person</span>
+              </div>
+
+              <div className="nt-meta" style={{ margin: '1rem 0 1.5rem' }}>
+                <span className="nt-meta__item">👥 Max 10 travellers</span>
+                <span className="nt-meta__item">🧭 Local guide included</span>
+              </div>
+
+              {isOngoing ? (
+                <button
+                  className="nt-btn nt-btn--accent nt-btn--block nt-btn--lg"
+                  onClick={() => navigate(`/book-tour/${tour._id}`)}
+                >
+                  Book this trip
+                </button>
+              ) : (
+                <button className="nt-btn nt-btn--ghost nt-btn--block nt-btn--lg" disabled>
+                  Not open for booking
+                </button>
+              )}
+
+              <p className="nt-help" style={{ textAlign: 'center', marginTop: '.85rem' }}>
+                You won't be charged yet — traveller details come next.
+              </p>
+            </aside>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </>
   );
 };
 
-export default TourDetails; 
+export default TourDetails;

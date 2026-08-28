@@ -1,179 +1,88 @@
-import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext, useEffect, useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+  const location = useLocation();
+
+  // The bar only grows a border once the page has scrolled under it.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Navigating on mobile should always close the menu sheet.
+  useEffect(() => setOpen(false), [location.pathname]);
+
+  const linkClass = ({ isActive }) =>
+    isActive ? 'nt-navlink nt-navlink--active' : 'nt-navlink';
+
+  const initials = (user?.name || user?.email || '?').trim().charAt(0);
 
   return (
-    <nav style={{
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '1rem 2rem',
-      color: 'Black',
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000,
-      backdropFilter: 'blur(10px)',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
-    }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        maxWidth: '1200px',
-        margin: '0 auto'
-      }}>
-        {/* Logo and Brand */}
-        <Link to="/" style={{
-          display: 'flex',
-          alignItems: 'center',
-          color: 'Black',
-          textDecoration: 'none',
-          fontSize: '1.8rem',
-          fontWeight: 'bold'
-        }}>
-          
-          <span style={{
-            background: 'linear-gradient(45deg, #ffffff, #f0f0f0)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-          }}>
-            NextTrip
-          </span>
+    <nav className={scrolled ? 'nt-nav nt-nav--scrolled' : 'nt-nav'}>
+      <div className="nt-container nt-nav__inner">
+        <Link to="/" className="nt-brand" aria-label="NextTrip home">
+          <span className="nt-brand__mark" aria-hidden="true">✦</span>
+          NextTrip
         </Link>
 
-        {/* Navigation Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {user ? (
-            <>
-              {user.role === 'admin' ? (
-                // Admin Navigation
-                <>
-                  <Link to="/admin" style={{
-                    color: 'white',
-                    textDecoration: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '25px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    fontWeight: '500'
-                  }}>
-                    Admin Dashboard
-                  </Link>
-                  <Link to="/profile" style={{
-                    color: 'white',
-                    textDecoration: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '25px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    fontWeight: '500'
-                  }}>
-                    👤 Profile
-                  </Link>
-                  <button onClick={logout} style={{
-                    background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '25px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)'
-                  }}>
-                    🚪 Logout
-                  </button>
-                </>
-              ) : (
-                // Regular User Navigation
-                <>
-                  <Link to="/" style={{
-                    color: 'white',
-                    textDecoration: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '25px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    fontWeight: '500'
-                  }}>
-                    🏠 Home
-                  </Link>
-                  <Link to="/bookings" style={{
-                    color: 'white',
-                    textDecoration: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '25px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    fontWeight: '500'
-                  }}>
-                    📋 My Bookings
-                  </Link>
-                  <Link to="/profile" style={{
-                    color: 'white',
-                    textDecoration: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '25px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    fontWeight: '500'
-                  }}>
-                    👤 Profile
-                  </Link>
-                  <button onClick={logout} style={{
-                    background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '25px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)'
-                  }}>
-                    🚪 Logout
-                  </button>
-                </>
-              )}
-            </>
-          ) : (
-            // Guest Navigation
-            <>
-              <Link to="/login" style={{
-                color: 'white',
-                textDecoration: 'none',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '25px',
-                background: 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                fontWeight: '500'
-              }}>
-                🔐 Login
-              </Link>
-              <Link to="/signup" style={{
-                background: 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)',
-                color: 'white',
-                textDecoration: 'none',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '25px',
-                fontWeight: '500',
-                boxShadow: '0 4px 15px rgba(78, 205, 196, 0.3)'
-              }}>
-                ✨ Sign Up
-              </Link>
-            </>
+        <button
+          className="nt-nav__toggle"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-label={open ? 'Close menu' : 'Open menu'}
+        >
+          {open ? '✕' : '☰'}
+        </button>
+
+        <div className={open ? 'nt-nav__links nt-nav__links--open' : 'nt-nav__links'}>
+          <NavLink to="/" className={linkClass} end>
+            Explore
+          </NavLink>
+
+          {user && user.role !== 'admin' && (
+            <NavLink to="/bookings" className={linkClass}>
+              My trips
+            </NavLink>
           )}
+
+          {user?.role === 'admin' && (
+            <NavLink to="/admin" className={linkClass}>
+              Dashboard
+            </NavLink>
+          )}
+
+          <div className="nt-nav__actions">
+            {user ? (
+              <>
+                <Link to="/profile" className="nt-nav__user" title={user.name || user.email}>
+                  <span className="nt-avatar">{initials}</span>
+                </Link>
+                <button className="nt-btn nt-btn--ghost nt-btn--sm" onClick={logout}>
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="nt-btn nt-btn--quiet nt-btn--sm">
+                  Log in
+                </Link>
+                <Link to="/signup" className="nt-btn nt-btn--primary nt-btn--sm">
+                  Sign up
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </nav>
   );
 };
 
-export default Navbar; 
+export default Navbar;
