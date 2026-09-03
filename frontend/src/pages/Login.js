@@ -1,6 +1,14 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import Icon from '../components/Icon';
+import ladakhImg from '../Assests/ladakh-auth.jpg';
+
+const ASIDE_POINTS = [
+  { icon: 'users', text: 'Ten travellers per departure, never more' },
+  { icon: 'compass', text: 'Guides who live on the route they lead' },
+  { icon: 'shield', text: 'The listed price is the price you pay' },
+];
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -26,30 +34,45 @@ const Login = () => {
     <div className="nt-auth">
       <div className="nt-auth__form">
         <div className="nt-auth__inner nt-rise">
-          <span className="nt-eyebrow">Welcome back</span>
+          <span className="nt-eyebrow">
+            <Icon name="sparkle" />
+            Welcome back
+          </span>
           <h1>Log in to NextTrip</h1>
           <p className="nt-auth__sub">
             Pick up where you left off and manage your upcoming trips.
           </p>
 
-          {error && <div className="nt-alert nt-alert--error">{error}</div>}
+          {error && (
+            <div className="nt-alert nt-alert--error">
+              <Icon name="close" />
+              {error}
+            </div>
+          )}
 
           {/* Account type decides where a successful login lands. */}
-          <div className="nt-chips" style={{ marginBottom: '1.5rem' }}>
-            <button
-              type="button"
-              className={loginType === 'user' ? 'nt-chip nt-chip--on' : 'nt-chip'}
-              onClick={() => setLoginType('user')}
-            >
-              Traveller
-            </button>
-            <button
-              type="button"
-              className={loginType === 'admin' ? 'nt-chip nt-chip--on' : 'nt-chip'}
-              onClick={() => setLoginType('admin')}
-            >
-              Administrator
-            </button>
+          <div
+            className="nt-segment"
+            role="radiogroup"
+            aria-label="Account type"
+            data-active={loginType}
+          >
+            <span className="nt-segment__thumb" aria-hidden="true" />
+            {[
+              { id: 'user', label: 'Traveller' },
+              { id: 'admin', label: 'Administrator' },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                role="radio"
+                aria-checked={loginType === opt.id}
+                className={loginType === opt.id ? 'nt-segment__opt is-on' : 'nt-segment__opt'}
+                onClick={() => setLoginType(opt.id)}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -69,36 +92,24 @@ const Login = () => {
 
             <div className="nt-field">
               <label className="nt-label" htmlFor="login-password">Password</label>
-              <div style={{ position: 'relative' }}>
+              <div className="nt-input-wrap">
                 <input
                   id="login-password"
-                  className="nt-input"
+                  className="nt-input nt-input--has-affix"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   autoComplete="current-password"
-                  style={{ paddingRight: '3.25rem' }}
                   required
                 />
                 <button
                   type="button"
+                  className="nt-input__affix"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  style={{
-                    position: 'absolute',
-                    right: '.6rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '1.05rem',
-                    lineHeight: 1,
-                    padding: '.35rem',
-                  }}
                 >
-                  {showPassword ? '🙈' : '👁️'}
+                  <Icon name={showPassword ? 'eyeOff' : 'eye'} />
                 </button>
               </div>
             </div>
@@ -109,7 +120,17 @@ const Login = () => {
               disabled={loading}
               style={{ marginTop: '1.5rem' }}
             >
-              {loading ? 'Signing in…' : 'Log in'}
+              {loading ? (
+                <>
+                  <span className="nt-btn__spinner" aria-hidden="true" />
+                  Signing in…
+                </>
+              ) : (
+                <>
+                  Log in
+                  <Icon name="arrowRight" />
+                </>
+              )}
             </button>
           </form>
 
@@ -120,16 +141,31 @@ const Login = () => {
       </div>
 
       <aside className="nt-auth__aside">
+        {/* The quote is about the Ladakh route, so the panel shows it. */}
+        <img className="nt-auth__photo" src={ladakhImg} alt="" />
+
         <blockquote className="nt-quote">
+          <Icon name="quote" className="nt-quote__mark" size="1.6rem" />
           The Ladakh route was the first trip where I never once felt like a tourist.
           Ten of us, one guide who grew up in the valley, and zero filler days.
-          <cite>— Ananya R., Leh–Nubra crossing</cite>
+          <cite>
+            <span className="nt-avatar nt-avatar--lg">A</span>
+            <span>
+              <strong>Ananya R.</strong>
+              <small>Leh–Nubra crossing</small>
+            </span>
+          </cite>
         </blockquote>
+
         <h2>Trips worth taking time off for</h2>
-        <p>
-          Small groups, local guides, and itineraries that leave room for the
-          places you did not plan on.
-        </p>
+        <ul className="nt-auth__points">
+          {ASIDE_POINTS.map((p) => (
+            <li key={p.text}>
+              <Icon name={p.icon} />
+              {p.text}
+            </li>
+          ))}
+        </ul>
       </aside>
     </div>
   );

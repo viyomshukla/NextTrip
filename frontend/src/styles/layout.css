@@ -44,15 +44,11 @@
 .nt-brand:hover { color: var(--ink); }
 
 .nt-brand__mark {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(140deg, var(--brand-600), var(--brand-800));
-  color: #fff;
-  font-size: 1.05rem;
-  box-shadow: var(--shadow-sm);
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .nt-nav__links {
@@ -182,6 +178,8 @@
   .nt-hero__art { order: -1; }
 }
 
+.nt-hero--compact { padding-block: clamp(2.5rem, 6vw, 4.25rem); }
+
 .nt-hero h1 { margin-bottom: 1rem; }
 .nt-hero__accent {
   background: linear-gradient(120deg, var(--brand-600), var(--accent-500));
@@ -208,11 +206,11 @@
 }
 .nt-stat__label { font-size: .84rem; color: var(--muted); margin-top: .3rem; }
 
-/* Collage of destination tiles stands in for photography we don't have. */
+/* Photo collage of the destinations the copy above talks about. */
 .nt-hero__art {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: 132px;
+  grid-auto-rows: 148px;
   gap: 1rem;
 }
 .nt-tile {
@@ -228,30 +226,68 @@
   box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
-  transition: transform .35s var(--ease-out);
+  isolation: isolate;
+  transition: transform .35s var(--ease-out), box-shadow .35s var(--ease-out);
 }
-.nt-tile:hover { transform: translateY(-4px) scale(1.01); }
-.nt-tile span { font-size: .78rem; font-weight: 500; opacity: .9; }
+.nt-tile__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+  transition: transform .55s var(--ease-out);
+}
+/* Scrim keeps the label readable over whatever part of the photo lands here. */
+.nt-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    to top,
+    rgba(2, 15, 28, .82) 0%,
+    rgba(2, 15, 28, .45) 38%,
+    rgba(2, 15, 28, .06) 70%
+  );
+}
+.nt-tile__label { position: relative; text-shadow: 0 1px 12px rgba(0, 0, 0, .35); }
+.nt-tile:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.nt-tile:hover .nt-tile__img { transform: scale(1.06); }
+.nt-tile span { display: block; font-size: .78rem; font-weight: 500; opacity: .92; margin-top: .12rem; }
 .nt-tile--tall { grid-row: span 2; }
+/* Fallback wash if a photo fails to load, tinted per destination. */
 .nt-tile--a { background: linear-gradient(150deg, #0d9488, #115e59); }
 .nt-tile--b { background: linear-gradient(150deg, #fb923c, #ea580c); }
 .nt-tile--c { background: linear-gradient(150deg, #38bdf8, #1d4ed8); }
 .nt-tile--d { background: linear-gradient(150deg, #a78bfa, #6d28d9); }
 
+@media (prefers-reduced-motion: reduce) {
+  .nt-tile, .nt-tile__img { transition: none; }
+  .nt-tile:hover { transform: none; }
+  .nt-tile:hover .nt-tile__img { transform: none; }
+}
+
 /* --------------------------------------------------------- search bar ---- */
 
 .nt-search {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: .6rem;
-  padding: .55rem .55rem .55rem 1.1rem;
+  grid-template-columns: auto 1fr auto auto;
+  gap: .5rem;
+  padding: .5rem .5rem .5rem 1.1rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-md);
   align-items: center;
-  max-width: 540px;
+  max-width: 560px;
+  transition: border-color .18s var(--ease), box-shadow .18s var(--ease);
 }
+.nt-search:focus-within {
+  border-color: var(--brand-500);
+  box-shadow: var(--shadow-md), 0 0 0 4px var(--brand-100);
+}
+.nt-search__icon { color: var(--muted); }
 .nt-search input {
   border: none;
   outline: none;
@@ -263,6 +299,27 @@
   min-width: 0;
 }
 .nt-search input::placeholder { color: var(--muted-2); }
+/* Chrome draws its own clear affordance on type=search; ours replaces it. */
+.nt-search input::-webkit-search-cancel-button { display: none; }
+.nt-search__clear {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--canvas-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .16s var(--ease), background-color .16s var(--ease);
+}
+.nt-search__clear:hover { color: var(--ink); background: var(--border); }
+
+@media (max-width: 520px) {
+  .nt-search { grid-template-columns: auto 1fr auto; padding-right: .75rem; }
+  .nt-search .nt-btn[type="submit"] { display: none; }
+}
 
 .nt-chips { display: flex; flex-wrap: wrap; gap: .55rem; }
 .nt-chip {
@@ -292,7 +349,7 @@
   border-radius: var(--radius);
   display: grid;
   place-items: center;
-  font-size: 1.4rem;
+  color: var(--brand-700);
   background: var(--brand-50);
   border: 1px solid var(--brand-200);
   margin-bottom: 1rem;
@@ -325,6 +382,102 @@
 .nt-cta h2 { color: #fff; margin-bottom: .75rem; }
 .nt-cta p { color: rgba(255, 255, 255, .82); max-width: 52ch; margin-inline: auto; }
 
+/* ------------------------------------------------------ section rhythm ---- */
+
+/* Alternating band keeps consecutive sections from reading as one long scroll. */
+.nt-section--alt {
+  background: linear-gradient(180deg, var(--canvas), var(--canvas-2) 55%, var(--canvas));
+  border-block: 1px solid var(--border);
+}
+
+.nt-section-head--center {
+  text-align: center;
+  max-width: 60ch;
+  margin-inline: auto;
+  margin-bottom: 3rem;
+}
+.nt-section-head--center p { margin-inline: auto; }
+
+/* --------------------------------------------------------- trust strip ---- */
+
+.nt-trust {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  flex-wrap: wrap;
+  margin-top: 1.75rem;
+  font-size: .92rem;
+  color: var(--muted);
+}
+.nt-trust strong { color: var(--ink); font-weight: 700; }
+
+/* ------------------------------------------------------- how it works ---- */
+
+.nt-how {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.75rem;
+  counter-reset: nt-step;
+}
+.nt-how__item {
+  position: relative;
+  display: flex;
+  gap: 1.1rem;
+  padding: 1.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+.nt-how__num {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand-700);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+}
+.nt-how__item h3 { font-size: 1.05rem; margin-bottom: .35rem; }
+.nt-how__item p { color: var(--muted); font-size: .93rem; margin: 0; }
+
+/* Connector between steps, drawn only where they sit side by side. */
+@media (min-width: 900px) {
+  .nt-how__item:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 2.55rem;
+    right: -1.75rem;
+    width: 1.75rem;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border-2), transparent);
+  }
+}
+
+/* ----------------------------------------------------------- CTA extras ---- */
+
+.nt-cta__actions { margin-top: 1.9rem; }
+.nt-cta__points {
+  list-style: none;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .6rem 1.75rem;
+  font-size: .9rem;
+  color: rgba(255, 255, 255, .8);
+}
+.nt-cta__points li { display: inline-flex; align-items: center; gap: .45rem; }
+.nt-cta__points .nt-icon { color: var(--accent-400); }
+
 /* -------------------------------------------------------------- footer ---- */
 
 .nt-footer {
@@ -348,6 +501,7 @@
 }
 
 .nt-footer .nt-brand { color: #fff; margin-bottom: .9rem; }
+.nt-footer .nt-brand__mark { background: #fff; padding: 4px; }
 .nt-footer p { font-size: .92rem; line-height: 1.7; }
 .nt-footer h4 {
   color: #fff;
@@ -409,8 +563,7 @@
   min-height: calc(100vh - var(--nav-h));
 }
 @media (max-width: 900px) {
-  .nt-auth { grid-template-columns: 1fr; }
-  .nt-auth__aside { display: none; }
+  .nt-auth { grid-template-columns: 1fr; min-height: 0; }
 }
 
 .nt-auth__form {
@@ -429,12 +582,37 @@
 .nt-auth__aside {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   padding: clamp(2.5rem, 5vw, 4rem);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   color: #fff;
+  /* Also the fallback wash if the photo below fails to load. */
   background: linear-gradient(150deg, var(--brand-700), var(--brand-900) 62%, #0b3b38);
+}
+.nt-auth__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+/* Brand-tinted scrim: keeps the panel teal and the white copy readable. */
+.nt-auth__aside::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  /* Stays light over the landscape, then ramps hard through the copy block. */
+  background:
+    linear-gradient(180deg,
+      rgba(4, 32, 31, .06) 0%,
+      rgba(4, 32, 31, .20) 42%,
+      rgba(3, 26, 25, .78) 68%,
+      rgba(2, 18, 18, .95) 100%),
+    linear-gradient(160deg, rgba(15, 118, 110, .30), rgba(19, 78, 74, .05) 55%);
 }
 .nt-auth__aside::before {
   content: "";
@@ -446,23 +624,60 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(249, 115, 22, .26), transparent 66%);
 }
-.nt-auth__aside > * { position: relative; }
+/* The photo is positioned by its own rule above and must stay out of flow. */
+.nt-auth__aside > *:not(.nt-auth__photo) { position: relative; }
 .nt-auth__aside h2 { color: #fff; font-size: clamp(1.5rem, 2.6vw, 2rem); }
 .nt-auth__aside p { color: rgba(255, 255, 255, .82); max-width: 42ch; }
 
 .nt-quote {
   border-left: 3px solid var(--accent-500);
-  padding-left: 1.1rem;
-  margin-bottom: 2.25rem;
-  font-size: 1.05rem;
+  padding-left: 1.2rem;
+  margin: 0 0 2.25rem;
+  font-size: 1.06rem;
   line-height: 1.6;
 }
+.nt-quote__mark { display: block; color: var(--accent-400); margin-bottom: .6rem; }
 .nt-quote cite {
-  display: block;
-  margin-top: .7rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-top: 1.1rem;
   font-style: normal;
-  font-size: .85rem;
-  color: rgba(255, 255, 255, .65);
+}
+.nt-quote cite strong { display: block; font-size: .92rem; color: #fff; font-weight: 700; }
+.nt-quote cite small { display: block; font-size: .82rem; color: rgba(255, 255, 255, .62); }
+/* The panel is dark, so the avatar inverts rather than using the brand tint. */
+.nt-quote .nt-avatar {
+  background: rgba(255, 255, 255, .14);
+  border-color: rgba(255, 255, 255, .28);
+  color: #fff;
+  backdrop-filter: blur(6px);
+}
+
+.nt-auth__points {
+  list-style: none;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: .7rem;
+}
+.nt-auth__points li {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  font-size: .94rem;
+  color: rgba(255, 255, 255, .88);
+}
+.nt-auth__points .nt-icon { color: var(--accent-400); }
+
+/* Stacked under the form on small screens, so it reads as a short banner
+   rather than a second full screen of photo. */
+@media (max-width: 900px) {
+  .nt-auth__aside {
+    min-height: 0;
+    padding: 2.75rem 1.5rem;
+  }
+  .nt-auth__aside h2 { font-size: 1.4rem; }
 }
 
 /* --------------------------------------------------------- page header ---- */

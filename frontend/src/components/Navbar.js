@@ -1,6 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import logoMark from '../Assests/logo-mark.png';
+import Icon from './Icon';
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -28,7 +30,7 @@ const Navbar = () => {
     <nav className={scrolled ? 'nt-nav nt-nav--scrolled' : 'nt-nav'}>
       <div className="nt-container nt-nav__inner">
         <Link to="/" className="nt-brand" aria-label="NextTrip home">
-          <span className="nt-brand__mark" aria-hidden="true">✦</span>
+          <img className="nt-brand__mark" src={logoMark} alt="" width="36" height="36" />
           NextTrip
         </Link>
 
@@ -38,7 +40,7 @@ const Navbar = () => {
           aria-expanded={open}
           aria-label={open ? 'Close menu' : 'Open menu'}
         >
-          {open ? '✕' : '☰'}
+          <Icon name={open ? "close" : "menu"} size="1.35rem" />
         </button>
 
         <div className={open ? 'nt-nav__links nt-nav__links--open' : 'nt-nav__links'}>

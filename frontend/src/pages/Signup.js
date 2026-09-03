@@ -1,6 +1,22 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import Icon from '../components/Icon';
+import ghatsImg from '../Assests/ghats-auth.jpg';
+
+const ASIDE_POINTS = [
+  { icon: 'ticket', text: 'Hold a place in about two minutes' },
+  { icon: 'shield', text: 'No card needed to create an account' },
+  { icon: 'headset', text: 'A real person on the other end of every trip' },
+];
+
+const STRENGTH = [
+  { label: 'Too short', tone: 'danger' },
+  { label: 'Weak', tone: 'danger' },
+  { label: 'Fair', tone: 'warn' },
+  { label: 'Good', tone: 'good' },
+  { label: 'Strong', tone: 'strong' },
+];
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -19,33 +35,36 @@ const Signup = () => {
   };
 
   // Cheap inline strength read so people aren't surprised by a server rejection.
-  const strength = (() => {
+  const score = (() => {
     if (!password) return null;
-    let score = 0;
-    if (password.length >= 8) score += 1;
-    if (/[A-Z]/.test(password)) score += 1;
-    if (/[0-9]/.test(password)) score += 1;
-    if (/[^A-Za-z0-9]/.test(password)) score += 1;
-    return [
-      { label: 'Too short', color: 'var(--danger)' },
-      { label: 'Weak', color: 'var(--danger)' },
-      { label: 'Fair', color: 'var(--warning)' },
-      { label: 'Good', color: 'var(--brand-600)' },
-      { label: 'Strong', color: 'var(--success)' },
-    ][score];
+    let s = 0;
+    if (password.length >= 8) s += 1;
+    if (/[A-Z]/.test(password)) s += 1;
+    if (/[0-9]/.test(password)) s += 1;
+    if (/[^A-Za-z0-9]/.test(password)) s += 1;
+    return s;
   })();
+  const strength = score === null ? null : STRENGTH[score];
 
   return (
     <div className="nt-auth">
       <div className="nt-auth__form">
         <div className="nt-auth__inner nt-rise">
-          <span className="nt-eyebrow">Get started</span>
+          <span className="nt-eyebrow">
+            <Icon name="sparkle" />
+            Get started
+          </span>
           <h1>Create your account</h1>
           <p className="nt-auth__sub">
             Free to join. Browse live departures and hold a place in minutes.
           </p>
 
-          {error && <div className="nt-alert nt-alert--error">{error}</div>}
+          {error && (
+            <div className="nt-alert nt-alert--error">
+              <Icon name="close" />
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="nt-field">
@@ -78,41 +97,36 @@ const Signup = () => {
 
             <div className="nt-field">
               <label className="nt-label" htmlFor="signup-password">Password</label>
-              <div style={{ position: 'relative' }}>
+              <div className="nt-input-wrap">
                 <input
                   id="signup-password"
-                  className="nt-input"
+                  className="nt-input nt-input--has-affix"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 8 characters"
                   autoComplete="new-password"
-                  style={{ paddingRight: '3.25rem' }}
+                  aria-describedby="signup-strength"
                   required
                 />
                 <button
                   type="button"
+                  className="nt-input__affix"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  style={{
-                    position: 'absolute',
-                    right: '.6rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '1.05rem',
-                    lineHeight: 1,
-                    padding: '.35rem',
-                  }}
                 >
-                  {showPassword ? '🙈' : '👁️'}
+                  <Icon name={showPassword ? 'eyeOff' : 'eye'} />
                 </button>
               </div>
+
               {strength && (
-                <div className="nt-help" style={{ color: strength.color, fontWeight: 600 }}>
-                  Password strength: {strength.label}
+                <div className="nt-strength" id="signup-strength" data-tone={strength.tone}>
+                  <div className="nt-strength__bar" aria-hidden="true">
+                    {[0, 1, 2, 3].map((i) => (
+                      <span key={i} className={i < score ? 'is-on' : ''} />
+                    ))}
+                  </div>
+                  <span className="nt-strength__label">{strength.label}</span>
                 </div>
               )}
             </div>
@@ -123,7 +137,17 @@ const Signup = () => {
               disabled={loading}
               style={{ marginTop: '1.5rem' }}
             >
-              {loading ? 'Creating account…' : 'Create account'}
+              {loading ? (
+                <>
+                  <span className="nt-btn__spinner" aria-hidden="true" />
+                  Creating account…
+                </>
+              ) : (
+                <>
+                  Create account
+                  <Icon name="arrowRight" />
+                </>
+              )}
             </button>
           </form>
 
@@ -134,16 +158,31 @@ const Signup = () => {
       </div>
 
       <aside className="nt-auth__aside">
+        {/* The quote is about a Western Ghats departure, so the panel shows it. */}
+        <img className="nt-auth__photo" src={ghatsImg} alt="" />
+
         <blockquote className="nt-quote">
+          <Icon name="quote" className="nt-quote__mark" size="1.6rem" />
           Booked on a Thursday, was on a bus through the Western Ghats by Saturday.
           The whole thing took less time than picking a restaurant.
-          <cite>— Dev M., Kerala backwaters</cite>
+          <cite>
+            <span className="nt-avatar nt-avatar--lg">D</span>
+            <span>
+              <strong>Dev M.</strong>
+              <small>Kerala backwaters</small>
+            </span>
+          </cite>
         </blockquote>
+
         <h2>Ten travellers. One local guide.</h2>
-        <p>
-          Every NextTrip departure is capped small and run by someone who lives
-          where you are going.
-        </p>
+        <ul className="nt-auth__points">
+          {ASIDE_POINTS.map((p) => (
+            <li key={p.text}>
+              <Icon name={p.icon} />
+              {p.text}
+            </li>
+          ))}
+        </ul>
       </aside>
     </div>
   );

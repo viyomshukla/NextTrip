@@ -2,19 +2,61 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import API_BASE from '../config';
+import Icon from '../components/Icon';
+import himalayasImg from '../Assests/himalayas-tile.jpg';
+import rajasthanImg from '../Assests/rajasthan-tile.jpg';
+import keralaImg from '../Assests/kerala-tile.jpg';
+import goaImg from '../Assests/goa-tile.jpg';
 
 const HERO_TILES = [
-  { cls: 'nt-tile--a nt-tile--tall', name: 'Himalayas', note: 'Treks & high passes' },
-  { cls: 'nt-tile--b', name: 'Rajasthan', note: 'Forts & desert' },
-  { cls: 'nt-tile--c', name: 'Kerala', note: 'Backwaters' },
-  { cls: 'nt-tile--d', name: 'Goa', note: 'Coast & culture' },
+  { cls: 'nt-tile--a nt-tile--tall', name: 'Himalayas', note: 'Treks & high passes', img: himalayasImg },
+  { cls: 'nt-tile--b', name: 'Rajasthan', note: 'Forts & desert', img: rajasthanImg },
+  { cls: 'nt-tile--c nt-tile--tall', name: 'Kerala', note: 'Backwaters', img: keralaImg },
+  { cls: 'nt-tile--d', name: 'Goa', note: 'Coast & culture', img: goaImg },
 ];
 
 const FEATURES = [
-  { icon: '🧭', title: 'Local guides', body: 'Every trip is led by someone who actually lives there.' },
-  { icon: '👥', title: 'Small groups', body: 'Capped at ten travellers, so nothing feels like a coach tour.' },
-  { icon: '🛡️', title: 'Clear pricing', body: 'The price you see covers the itinerary. No surprise add-ons.' },
-  { icon: '⚡', title: 'Fast booking', body: 'Reserve a place in a couple of minutes, traveller details included.' },
+  { icon: 'compass', title: 'Local guides', body: 'Every trip is led by someone who actually lives there.' },
+  { icon: 'users', title: 'Small groups', body: 'Capped at ten travellers, so nothing feels like a coach tour.' },
+  { icon: 'shield', title: 'Clear pricing', body: 'The price you see covers the itinerary. No surprise add-ons.' },
+  { icon: 'bolt', title: 'Fast booking', body: 'Reserve a place in a couple of minutes, traveller details included.' },
+];
+
+const STEPS = [
+  {
+    title: 'Pick a departure',
+    body: 'Browse live trips by region or interest. Every listing shows the exact route, dates, and who is guiding it.',
+  },
+  {
+    title: 'Hold your place',
+    body: 'Add your traveller details and reserve. You get a confirmation immediately, with the full itinerary attached.',
+  },
+  {
+    title: 'Go, with support',
+    body: 'Your guide gets in touch before departure. We stay reachable for the whole trip, not just the booking.',
+  },
+];
+
+/* Placeholder copy for layout — replace with real reviews before launch. */
+const REVIEWS = [
+  {
+    quote:
+      'Ten of us, one guide who grew up in the valley, and zero filler days. The first trip where I never once felt like a tourist.',
+    name: 'Ananya R.',
+    trip: 'Leh–Nubra crossing',
+  },
+  {
+    quote:
+      'Booked on a Thursday, was on a bus through the Western Ghats by Saturday. The whole thing took less time than picking a restaurant.',
+    name: 'Dev M.',
+    trip: 'Kerala backwaters',
+  },
+  {
+    quote:
+      'The price on the page was the price I paid. After years of resort upsells that alone was worth the booking.',
+    name: 'Farah S.',
+    trip: 'Jaisalmer & Thar desert',
+  },
 ];
 
 const CATEGORIES = ['All', 'Adventure', 'Beach', 'Cultural', 'Wildlife', 'Mountain'];
@@ -30,6 +72,14 @@ const TourSkeleton = () => (
       <div className="nt-skeleton nt-skeleton--line" style={{ width: '60%' }} />
     </div>
   </div>
+);
+
+const Stars = ({ value = 5 }) => (
+  <span className="nt-stars" aria-label={`${value} out of 5`}>
+    {[0, 1, 2, 3, 4].map((i) => (
+      <Icon key={i} name="star" className={i < value ? '' : 'nt-stars__off'} />
+    ))}
+  </span>
 );
 
 const TourCard = ({ tour, onBook, onPeek }) => {
@@ -48,10 +98,11 @@ const TourCard = ({ tour, onBook, onPeek }) => {
             }}
           />
         ) : (
-          <span aria-hidden="true">🏔️</span>
+          <Icon name="mountain" size="2.5rem" />
         )}
         <span className={`nt-badge nt-badge--float ${isOngoing ? 'nt-badge--live' : 'nt-badge--soon'}`}>
-          {isOngoing ? '● Booking open' : '◷ Coming soon'}
+          <span className={isOngoing ? 'nt-dot nt-dot--live' : 'nt-dot'} />
+          {isOngoing ? 'Booking open' : 'Coming soon'}
         </span>
       </div>
 
@@ -59,8 +110,15 @@ const TourCard = ({ tour, onBook, onPeek }) => {
         <h3 className="nt-tour__title">{tour.title}</h3>
 
         <p className="nt-tour__loc">
-          📍 {tour.location || 'Location to be announced'}
-          {tour.duration ? ` · ${tour.duration} days` : ''}
+          <Icon name="pin" />
+          {tour.location || 'Location to be announced'}
+          {tour.duration ? (
+            <>
+              <span className="nt-tour__sep" />
+              <Icon name="clock" />
+              {tour.duration} days
+            </>
+          ) : null}
         </p>
 
         {tour.description && <p className="nt-tour__desc">{tour.description}</p>}
@@ -72,6 +130,7 @@ const TourCard = ({ tour, onBook, onPeek }) => {
           {isOngoing ? (
             <button className="nt-btn nt-btn--accent nt-btn--sm" onClick={() => onBook(tour._id)}>
               Book now
+              <Icon name="arrowRight" />
             </button>
           ) : (
             <button className="nt-btn nt-btn--ghost nt-btn--sm" onClick={onPeek}>
@@ -133,6 +192,7 @@ const Home = () => {
 
   const ongoing = visible.filter((t) => t.status === 'ongoing');
   const upcoming = visible.filter((t) => t.status === 'upcoming');
+  const isFiltered = query.trim() !== '' || category !== 'All';
 
   /* ------------------------------------------------------ guest landing ---- */
   if (!user) {
@@ -142,7 +202,10 @@ const Home = () => {
           <div className="nt-container">
             <div className="nt-hero__grid">
               <div className="nt-rise">
-                <span className="nt-eyebrow">✦ Small-group travel</span>
+                <span className="nt-eyebrow">
+                  <Icon name="sparkle" />
+                  Small-group travel
+                </span>
                 <h1>
                   Go somewhere that <span className="nt-hero__accent">stays with you</span>
                 </h1>
@@ -153,10 +216,18 @@ const Home = () => {
                 <div className="nt-hero__cta">
                   <Link to="/signup" className="nt-btn nt-btn--accent nt-btn--lg">
                     Start exploring
+                    <Icon name="arrowRight" />
                   </Link>
                   <Link to="/login" className="nt-btn nt-btn--ghost nt-btn--lg">
                     I have an account
                   </Link>
+                </div>
+
+                <div className="nt-trust">
+                  <Stars value={5} />
+                  <span>
+                    <strong>4.8 out of 5</strong> from 1,200+ travellers
+                  </span>
                 </div>
 
                 <div className="nt-hero__stats">
@@ -169,17 +240,27 @@ const Home = () => {
                     <div className="nt-stat__label">Travellers max</div>
                   </div>
                   <div>
-                    <div className="nt-stat__num">4.8★</div>
-                    <div className="nt-stat__label">Average rating</div>
+                    <div className="nt-stat__num">18</div>
+                    <div className="nt-stat__label">Regions covered</div>
                   </div>
                 </div>
               </div>
 
               <div className="nt-hero__art" aria-hidden="true">
-                {HERO_TILES.map((t) => (
+                {HERO_TILES.map((t, i) => (
                   <div key={t.name} className={`nt-tile ${t.cls}`}>
-                    {t.name}
-                    <span>{t.note}</span>
+                    <img
+                      className="nt-tile__img"
+                      src={t.img}
+                      alt=""
+                      /* The first tile is the largest and sits above the fold. */
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                      decoding="async"
+                    />
+                    <div className="nt-tile__label">
+                      {t.name}
+                      <span>{t.note}</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -189,17 +270,76 @@ const Home = () => {
 
         <section className="nt-section">
           <div className="nt-container">
-            <div className="nt-section-head">
-              <h2>Why travellers pick NextTrip</h2>
+            <div className="nt-section-head nt-section-head--center">
+              <span className="nt-eyebrow">
+                <Icon name="shield" />
+                Why NextTrip
+              </span>
+              <h2>Built for people who hate package tours</h2>
               <p>Fewer people, better guides, and a booking flow that respects your time.</p>
             </div>
             <div className="nt-grid nt-grid--4">
               {FEATURES.map((f) => (
                 <div key={f.title} className="nt-feature">
-                  <div className="nt-feature__icon" aria-hidden="true">{f.icon}</div>
+                  <div className="nt-feature__icon">
+                    <Icon name={f.icon} size="1.4rem" />
+                  </div>
                   <h3>{f.title}</h3>
                   <p>{f.body}</p>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="nt-section nt-section--alt">
+          <div className="nt-container">
+            <div className="nt-section-head nt-section-head--center">
+              <span className="nt-eyebrow">
+                <Icon name="map" />
+                How it works
+              </span>
+              <h2>Three steps, then you are packing</h2>
+              <p>No enquiry forms, no callbacks, no waiting on a quote.</p>
+            </div>
+
+            <ol className="nt-how">
+              {STEPS.map((s, i) => (
+                <li key={s.title} className="nt-how__item">
+                  <span className="nt-how__num">{i + 1}</span>
+                  <div>
+                    <h3>{s.title}</h3>
+                    <p>{s.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section className="nt-section">
+          <div className="nt-container">
+            <div className="nt-section-head nt-section-head--center">
+              <span className="nt-eyebrow">
+                <Icon name="quote" />
+                Travellers
+              </span>
+              <h2>What people say when they get back</h2>
+            </div>
+
+            <div className="nt-grid nt-grid--3">
+              {REVIEWS.map((r) => (
+                <figure key={r.name} className="nt-review">
+                  <Stars value={5} />
+                  <blockquote>{r.quote}</blockquote>
+                  <figcaption>
+                    <span className="nt-avatar nt-avatar--lg">{r.name.charAt(0)}</span>
+                    <span>
+                      <strong>{r.name}</strong>
+                      <small>{r.trip}</small>
+                    </span>
+                  </figcaption>
+                </figure>
               ))}
             </div>
           </div>
@@ -213,11 +353,17 @@ const Home = () => {
                 Create a free account to browse live departures, see who is guiding each
                 route, and hold a place before it fills.
               </p>
-              <div style={{ marginTop: '1.75rem' }}>
+              <div className="nt-cta__actions">
                 <Link to="/signup" className="nt-btn nt-btn--accent nt-btn--lg">
                   Create free account
+                  <Icon name="arrowRight" />
                 </Link>
               </div>
+              <ul className="nt-cta__points">
+                <li><Icon name="check" /> Free to join</li>
+                <li><Icon name="check" /> No card required</li>
+                <li><Icon name="check" /> Cancel any hold</li>
+              </ul>
             </div>
           </div>
         </section>
@@ -230,7 +376,10 @@ const Home = () => {
     return (
       <section className="nt-section">
         <div className="nt-container">
-          <span className="nt-eyebrow">Admin</span>
+          <span className="nt-eyebrow">
+            <Icon name="chart" />
+            Admin
+          </span>
           <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)' }}>
             Welcome back, {user.name}
           </h1>
@@ -240,16 +389,19 @@ const Home = () => {
 
           <div className="nt-grid nt-grid--3">
             {[
-              { icon: '👥', title: 'Users', body: 'Create, view, and manage every account.' },
-              { icon: '🗺️', title: 'Tours', body: 'Publish new routes, edit details, retire old ones.' },
-              { icon: '📊', title: 'Bookings', body: 'Monitor reservations across the platform.' },
+              { icon: 'users', title: 'Users', body: 'Create, view, and manage every account.' },
+              { icon: 'map', title: 'Tours', body: 'Publish new routes, edit details, retire old ones.' },
+              { icon: 'chart', title: 'Bookings', body: 'Monitor reservations across the platform.' },
             ].map((c) => (
               <div key={c.title} className="nt-card nt-card--pad nt-feature">
-                <div className="nt-feature__icon" aria-hidden="true">{c.icon}</div>
+                <div className="nt-feature__icon">
+                  <Icon name={c.icon} size="1.4rem" />
+                </div>
                 <h3>{c.title}</h3>
                 <p style={{ marginBottom: '1.5rem' }}>{c.body}</p>
                 <Link to="/admin" className="nt-btn nt-btn--primary nt-btn--sm">
                   Open dashboard
+                  <Icon name="arrowRight" />
                 </Link>
               </div>
             ))}
@@ -262,9 +414,12 @@ const Home = () => {
   /* -------------------------------------------------- signed-in browsing ---- */
   return (
     <>
-      <section className="nt-hero">
+      <section className="nt-hero nt-hero--compact">
         <div className="nt-container">
-          <span className="nt-eyebrow">✦ Welcome back, {user.name}</span>
+          <span className="nt-eyebrow">
+            <Icon name="sparkle" />
+            Welcome back, {user.name}
+          </span>
           <h1 style={{ maxWidth: '16ch' }}>
             Where are you <span className="nt-hero__accent">going next?</span>
           </h1>
@@ -272,7 +427,9 @@ const Home = () => {
             Browse live departures and hold your place in a few taps.
           </p>
 
-          <div className="nt-search">
+          {/* Submitting is a no-op: filtering already runs live as you type. */}
+          <form className="nt-search" role="search" onSubmit={(e) => e.preventDefault()}>
+            <Icon name="search" className="nt-search__icon" />
             <input
               type="search"
               value={query}
@@ -280,14 +437,28 @@ const Home = () => {
               placeholder="Search destinations, tours, or regions"
               aria-label="Search tours"
             />
-            <span className="nt-btn nt-btn--primary" aria-hidden="true">Search</span>
-          </div>
+            {query && (
+              <button
+                type="button"
+                className="nt-search__clear"
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+              >
+                <Icon name="close" />
+              </button>
+            )}
+            <button type="submit" className="nt-btn nt-btn--primary">
+              Search
+            </button>
+          </form>
 
           <div className="nt-chips" style={{ marginTop: '1.25rem' }}>
             {CATEGORIES.map((c) => (
               <button
                 key={c}
+                type="button"
                 className={category === c ? 'nt-chip nt-chip--on' : 'nt-chip'}
+                aria-pressed={category === c}
                 onClick={() => setCategory(c)}
               >
                 {c}
@@ -305,10 +476,18 @@ const Home = () => {
           <div style={{ marginBottom: '4rem' }}>
             <div className="nt-row nt-section-head">
               <div>
-                <span className="nt-badge nt-badge--live">● Booking open</span>
+                <span className="nt-badge nt-badge--live">
+                  <span className="nt-dot nt-dot--live" />
+                  Booking open
+                </span>
                 <h2 style={{ marginTop: '.75rem', marginBottom: '.25rem' }}>Ongoing tours</h2>
                 <p>Departures you can join right now.</p>
               </div>
+              {!loading && ongoing.length > 0 && (
+                <span className="nt-count">
+                  {ongoing.length} {ongoing.length === 1 ? 'trip' : 'trips'}
+                </span>
+              )}
             </div>
 
             {loading ? (
@@ -317,15 +496,23 @@ const Home = () => {
               </div>
             ) : ongoing.length === 0 ? (
               <div className="nt-empty">
-                <div className="nt-empty__icon" aria-hidden="true">🧭</div>
-                <h3>No tours match that search</h3>
-                <p>Try a different destination or clear your filters.</p>
-                <button
-                  className="nt-btn nt-btn--ghost"
-                  onClick={() => { setQuery(''); setCategory('All'); }}
-                >
-                  Clear filters
-                </button>
+                <div className="nt-empty__icon">
+                  <Icon name="compass" size="1.75rem" />
+                </div>
+                <h3>{isFiltered ? 'No tours match that search' : 'No departures open yet'}</h3>
+                <p>
+                  {isFiltered
+                    ? 'Try a different destination or clear your filters.'
+                    : 'New routes are added regularly — check back soon.'}
+                </p>
+                {isFiltered && (
+                  <button
+                    className="nt-btn nt-btn--ghost"
+                    onClick={() => { setQuery(''); setCategory('All'); }}
+                  >
+                    Clear filters
+                  </button>
+                )}
               </div>
             ) : (
               <div className="nt-grid nt-grid--tours">
@@ -345,10 +532,18 @@ const Home = () => {
           <div>
             <div className="nt-row nt-section-head">
               <div>
-                <span className="nt-badge nt-badge--soon">◷ Coming soon</span>
+                <span className="nt-badge nt-badge--soon">
+                  <span className="nt-dot" />
+                  Coming soon
+                </span>
                 <h2 style={{ marginTop: '.75rem', marginBottom: '.25rem' }}>Upcoming tours</h2>
                 <p>Routes opening for booking shortly.</p>
               </div>
+              {!loading && upcoming.length > 0 && (
+                <span className="nt-count">
+                  {upcoming.length} {upcoming.length === 1 ? 'trip' : 'trips'}
+                </span>
+              )}
             </div>
 
             {loading ? (
@@ -357,7 +552,9 @@ const Home = () => {
               </div>
             ) : upcoming.length === 0 ? (
               <div className="nt-empty">
-                <div className="nt-empty__icon" aria-hidden="true">⏳</div>
+                <div className="nt-empty__icon">
+                  <Icon name="clock" size="1.75rem" />
+                </div>
                 <h3>Nothing upcoming yet</h3>
                 <p>New departures are added regularly — check back soon.</p>
               </div>
@@ -386,7 +583,9 @@ const Home = () => {
           onClick={() => setShowUpcomingDialog(false)}
         >
           <div className="nt-modal__panel" onClick={(e) => e.stopPropagation()}>
-            <div className="nt-empty__icon" aria-hidden="true">⏳</div>
+            <div className="nt-empty__icon">
+              <Icon name="clock" size="1.75rem" />
+            </div>
             <h3 id="nt-upcoming-title">Not open for booking yet</h3>
             <p style={{ color: 'var(--muted)' }}>
               This tour is still marked upcoming. We will open places as soon as the

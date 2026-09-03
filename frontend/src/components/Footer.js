@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import logoMark from '../Assests/logo-mark.png';
 
 const Footer = () => (
   <footer className="nt-footer">
@@ -7,7 +8,7 @@ const Footer = () => (
       <div className="nt-footer__grid">
         <div>
           <Link to="/" className="nt-brand">
-            <span className="nt-brand__mark" aria-hidden="true">✦</span>
+            <img className="nt-brand__mark" src={logoMark} alt="" width="36" height="36" />
             NextTrip
           </Link>
           <p>
